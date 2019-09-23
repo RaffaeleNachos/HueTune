@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
         //testare se geocoder è presente nel paese DA FARE
 
         //API FOR PLACE AUTOCOMPLETE
-        String apiKey = getString(R.string.api_key);
+        String apiKey = getString(R.string.myapikey);
 
         if (!Places.isInitialized()) {
             Places.initialize(getApplicationContext(), apiKey);
@@ -206,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         if (id == R.id.action_del) {
-            Snackbar sbar = Snackbar.make(findViewById(R.id.myFabLayout), "Deleting all photos", Snackbar.LENGTH_LONG);
+            Snackbar sbar = Snackbar.make(findViewById(R.id.myFABLayout), "Deleting all photos", Snackbar.LENGTH_LONG);
             LinearLayout llc = findViewById(R.id.llc);
             LinearLayout llg = findViewById(R.id.llg);
             sbar.setAction("UNDO", new View.OnClickListener() {
