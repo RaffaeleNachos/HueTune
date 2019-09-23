@@ -1,20 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
+    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/myFabLayout"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
     <LinearLayout
+        android:id="@+id/llg"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginEnd="30dp"
-        android:layout_marginRight="30dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="20dp"
+        android:layout_marginRight="20dp"
         android:layout_marginBottom="170dp"
-        android:id="@+id/llg"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:padding="10dp"
         android:visibility="invisible">
 
         <TextView
@@ -31,21 +38,26 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
             app:backgroundTint="@color/colorPrimaryDark"
-            app:srcCompat="@drawable/baseline_add_photo_alternate_white_24" />
+            app:srcCompat="@drawable/baseline_add_photo_alternate_white_24"
+            android:clickable="true"/>
 
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/llc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginEnd="30dp"
-        android:layout_marginRight="30dp"
+        android:layout_gravity="end|bottom"
+        android:layout_marginEnd="20dp"
+        android:layout_marginRight="20dp"
         android:layout_marginBottom="100dp"
-        android:id="@+id/llc"
-        android:visibility="invisible" >
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:padding="10dp"
+        android:visibility="invisible">
 
         <TextView
             android:layout_width="wrap_content"
@@ -53,8 +65,7 @@
             android:layout_gravity="center_vertical"
             android:fontFamily="@font/fredoka"
             android:text="Camera"
-            android:textColor="@color/colorPrimaryDark"
-            />
+            android:textColor="@color/colorPrimaryDark" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/addc"
@@ -62,7 +73,8 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
             app:backgroundTint="@color/colorPrimaryDark"
-            app:srcCompat="@drawable/baseline_add_a_photo_white_24" />
+            app:srcCompat="@drawable/baseline_add_a_photo_white_24"
+            android:clickable="true"/>
 
     </LinearLayout>
 
@@ -70,6 +82,7 @@
         android:id="@+id/add"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
@@ -81,7 +94,6 @@
         android:elevation="4dp"
         android:visibility="visible"
         app:backgroundTint="@color/colorPrimary"
-        app:pressedTranslationZ="12dp"
         app:srcCompat="@drawable/baseline_add_white_48" />
 
-</RelativeLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

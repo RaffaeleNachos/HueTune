@@ -2,7 +2,7 @@ package com.example.huetune;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.media.Image;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,17 +22,17 @@ public class MyAdapter extends CursorAdapter {
     }
 
     @Override
-    public void bindView(View view, Context context, Cursor cursor) {
+    public void bindView(View view, final Context context, Cursor cursor) {
         // Find fields to populate in inflated template
-        //ImageView myImg = view.findViewById(R.id.photoView);
+        ImageView myImg = view.findViewById(R.id.photoView);
         TextView myLoc = view.findViewById(R.id.locationView);
         TextView mySong = view.findViewById(R.id.songView);
         // Extract properties from cursor
+        String img = cursor.getString(cursor.getColumnIndexOrThrow("picuri"));
         String loc = cursor.getString(cursor.getColumnIndexOrThrow("location"));
         String tune = cursor.getString(cursor.getColumnIndexOrThrow("song"));
-        //int img = cursor.getInt(cursor.getColumnIndexOrThrow("image"));
         // Populate fields with extracted properties
-        //myImg.setImageBitmap(image);
+        myImg.setImageURI(Uri.parse(img));
         myLoc.setText(String.valueOf(loc));
         mySong.setText(String.valueOf(tune));
     }
