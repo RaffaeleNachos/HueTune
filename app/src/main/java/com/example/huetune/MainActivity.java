@@ -259,15 +259,7 @@ public class MainActivity extends AppCompatActivity {
             adapter.changeCursor(cursor);
         }
         if (requestCode == TAKE_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
-            Uri imageUri = Uri.fromFile(new File(currentPhotoPath));
-            Log.w("path cam", currentPhotoPath);
-            String mypos = getMyPosition(currentPhotoPath);
-            //get della posizione da fare assolutamente in asynctask
-            mySpotifyGET(mypos);
-            handler.addPic(imageUri.toString(), mypos, "Song");
-            db = handler.getWritableDatabase();
-            Cursor cursor = db.rawQuery("SELECT _id,* FROM pics", null);
-            adapter.changeCursor(cursor);
+            mySpotifyGET();
         }
         if (requestCode == AUTOCOMPLETE_REQUEST_CODE && resultCode == Activity.RESULT_OK){
             Place place = Autocomplete.getPlaceFromIntent(data);
@@ -335,8 +327,9 @@ public class MainActivity extends AppCompatActivity {
         return "Choose Position";
     }
 
-    private void mySpotifyGET(String searchtext){
-        requrl = requrl + "q=" + searchtext + "&type=track&market=IT&limit=1&offset=0";
+    private void mySpotifyGET(){
+        final String mypos = getMyPosition(currentPhotoPath);
+        requrl = requrl + "q=" + mypos + "&type=track&market=IT&limit=1&offset=0";
         JsonObjectRequest jsonreq = new JsonObjectRequest
                 (Request.Method.GET, requrl, null, new Response.Listener<JSONObject>() {
 
@@ -362,12 +355,17 @@ public class MainActivity extends AppCompatActivity {
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        completesong = songname + "-" + artistname;
-                        completelink = songlink;
                         Log.w("songname", songname);
                         Log.w("artistname", artistname);
                         Log.w("songlink", songlink);
                         Log.w("jsonresp", response.toString().replaceAll("\\\\", ""));
+                        //ADD TO DB
+                        Uri imageUri = Uri.fromFile(new File(currentPhotoPath));
+                        //get della posizione da fare assolutamente in asynctask
+                        handler.addPic(imageUri.toString(), mypos, songname + "-" + artistname);
+                        db = handler.getWritableDatabase();
+                        Cursor cursor = db.rawQuery("SELECT _id,* FROM pics", null);
+                        adapter.changeCursor(cursor);
                     }
                 }, new Response.ErrorListener() {
 
