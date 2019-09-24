@@ -78,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
     private List<Address> addresses;
     private RequestQueue requestQueue;
     private String requrl = "https://api.spotify.com/v1/search?";
+    private String sessionToken = null;
 
 
     @Override
@@ -339,11 +340,17 @@ public class MainActivity extends AppCompatActivity {
 
     private void getSpotifyToken(){
         String rest = "https://accounts.spotify.com/api/token";
-        StringRequest jsonreq = new StringRequest
+        StringRequest jsonreq = new StringRequest  //uso stringrequest perchè JSONObjreq fa override di getparams() e non chiama il metodo
                 (Request.Method.POST, rest, new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        Log.w("token", response);
+                        JSONObject token = null;
+                        try {
+                            token = new JSONObject(response);
+                            sessionToken = token.getString("access_token");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                 },
                         new Response.ErrorListener() {
@@ -430,7 +437,7 @@ public class MainActivity extends AppCompatActivity {
                 HashMap headers = new HashMap();
                 headers.put("Accept", "application/json");
                 headers.put("Content-Type", "application/json");
-                headers.put("Authorization", "Bearer BQAtxWroMham9wJ3sLuyhwsNOS3kIHZoFERxmz2qnIsz9u2No1DKtkwLeCzf5-ZjnNOJNn9k-DWw2XGGiSqfXTIv23m8ib7-N3l84i_Ahw2db8gWW0crFhyNp0Fy9NP3EGlqvSwt9kSw8alHrf8D9h-WWw");
+                headers.put("Authorization", "Bearer " + sessionToken);
                 return headers;
             }
         };
