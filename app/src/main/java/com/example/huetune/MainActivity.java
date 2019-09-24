@@ -42,6 +42,8 @@ import androidx.appcompat.widget.SearchView;
 
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -72,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
     private Geocoder geocoder;
     private List<Address> addresses;
     private RequestQueue requestQueue;
+    private String requrl = "https://api.spotify.com/v1/search?";
 
 
     @Override
@@ -176,34 +179,6 @@ public class MainActivity extends AppCompatActivity {
 
         //REST CALL TO SPOTIFY
         requestQueue = Volley.newRequestQueue(this);
-        String testurl = "https://api.spotify.com/v1/search?q=tania%20bowra&type=artist";
-        JsonObjectRequest jsonreq = new JsonObjectRequest
-                (Request.Method.GET, testurl, null, new Response.Listener<JSONObject>() {
-
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Log.w("jsonresp", response.toString());
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
-                        Log.w("errorresp", error.toString());
-                    }
-                })
-            {
-                /** Passing some request headers* */
-                @Override
-                public Map getHeaders() throws AuthFailureError {
-                    HashMap headers = new HashMap();
-                    headers.put("Accept", "application/json");
-                    headers.put("Content-Type", "application/json");
-                    headers.put("Authorization", "Bearer BQAOwXoZuxKBtB7eBnp2B6LTPK8UOkIMPraDE6RubLZSjed4FV9TIhjBCTgeXoPVlmQslGALxNzj72K_wObw0H1rwawIMvWYMzcQ1VZhKEjXs0qNKu9BecfQ8ri11gn7lu3Np_SPjpyXTsq45SvzD4ty5A");
-                    return headers;
-                }
-        };
-        requestQueue.add(jsonreq);
     }
 
     //metod to add search and oth opt
@@ -286,8 +261,10 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == TAKE_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
             Uri imageUri = Uri.fromFile(new File(currentPhotoPath));
             Log.w("path cam", currentPhotoPath);
+            String mypos = getMyPosition(currentPhotoPath);
             //get della posizione da fare assolutamente in asynctask
-            handler.addPic(imageUri.toString(), getMyPosition(currentPhotoPath), "Song");
+            mySpotifyGET(mypos);
+            handler.addPic(imageUri.toString(), mypos, "Song");
             db = handler.getWritableDatabase();
             Cursor cursor = db.rawQuery("SELECT _id,* FROM pics", null);
             adapter.changeCursor(cursor);
@@ -356,5 +333,61 @@ public class MainActivity extends AppCompatActivity {
             return addresses.get(0).getLocality()+", "+addresses.get(0).getAdminArea();
         }
         return "Choose Position";
+    }
+
+    private void mySpotifyGET(String searchtext){
+        requrl = requrl + "q=" + searchtext + "&type=track&market=IT&limit=1&offset=0";
+        JsonObjectRequest jsonreq = new JsonObjectRequest
+                (Request.Method.GET, requrl, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        JSONObject tracks = null;
+                        JSONArray items = null;
+                        JSONObject urls = null;
+                        String songlink = null;
+                        String songname = null;
+                        JSONArray artists = null;
+                        JSONObject artist = null;
+                        String artistname = null;
+                        try {
+                            tracks = response.getJSONObject("tracks");
+                            items = tracks.getJSONArray("items");
+                            urls = (JSONObject) items.get(0);
+                            songname = urls.getString("name");
+                            songlink = urls.getJSONObject("external_urls").getString("spotify");
+                            artists = urls.getJSONArray("artists");
+                            artist = (JSONObject) artists.get(0);
+                            artistname = artist.getString("name");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        completesong = songname + "-" + artistname;
+                        completelink = songlink;
+                        Log.w("songname", songname);
+                        Log.w("artistname", artistname);
+                        Log.w("songlink", songlink);
+                        Log.w("jsonresp", response.toString().replaceAll("\\\\", ""));
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Log.w("errorresp", error.toString());
+                    }
+                })
+        {
+            /** Passing some request headers* */
+            @Override
+            public Map getHeaders() throws AuthFailureError {
+                HashMap headers = new HashMap();
+                headers.put("Accept", "application/json");
+                headers.put("Content-Type", "application/json");
+                headers.put("Authorization", "Bearer BQAtxWroMham9wJ3sLuyhwsNOS3kIHZoFERxmz2qnIsz9u2No1DKtkwLeCzf5-ZjnNOJNn9k-DWw2XGGiSqfXTIv23m8ib7-N3l84i_Ahw2db8gWW0crFhyNp0Fy9NP3EGlqvSwt9kSw8alHrf8D9h-WWw");
+                return headers;
+            }
+        };
+        requestQueue.add(jsonreq);
     }
 }
