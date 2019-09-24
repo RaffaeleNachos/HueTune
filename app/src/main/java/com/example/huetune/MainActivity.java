@@ -10,12 +10,20 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
@@ -34,13 +42,17 @@ import androidx.appcompat.widget.SearchView;
 
 import android.widget.Toast;
 
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -59,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
     private SearchView searchvw;
     private Geocoder geocoder;
     private List<Address> addresses;
+    private RequestQueue requestQueue;
 
 
     @Override
@@ -161,6 +174,36 @@ public class MainActivity extends AppCompatActivity {
             Places.initialize(getApplicationContext(), apiKey);
         }
 
+        //REST CALL TO SPOTIFY
+        requestQueue = Volley.newRequestQueue(this);
+        String testurl = "https://api.spotify.com/v1/search?q=tania%20bowra&type=artist";
+        JsonObjectRequest jsonreq = new JsonObjectRequest
+                (Request.Method.GET, testurl, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.w("jsonresp", response.toString());
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Log.w("errorresp", error.toString());
+                    }
+                })
+            {
+                /** Passing some request headers* */
+                @Override
+                public Map getHeaders() throws AuthFailureError {
+                    HashMap headers = new HashMap();
+                    headers.put("Accept", "application/json");
+                    headers.put("Content-Type", "application/json");
+                    headers.put("Authorization", "Bearer BQAOwXoZuxKBtB7eBnp2B6LTPK8UOkIMPraDE6RubLZSjed4FV9TIhjBCTgeXoPVlmQslGALxNzj72K_wObw0H1rwawIMvWYMzcQ1VZhKEjXs0qNKu9BecfQ8ri11gn7lu3Np_SPjpyXTsq45SvzD4ty5A");
+                    return headers;
+                }
+        };
+        requestQueue.add(jsonreq);
     }
 
     //metod to add search and oth opt
