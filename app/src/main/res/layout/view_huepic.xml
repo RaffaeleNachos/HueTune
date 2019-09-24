@@ -33,20 +33,27 @@
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:layout_margin="10dp"
-                        android:layout_weight="1"
                         android:src="@drawable/baseline_near_me_white_36"
                         android:tint="@color/colorPrimary"
                         />
 
                     <TextView
                         android:id="@+id/locationView"
-                        android:layout_width="wrap_content"
+                        android:layout_width="210dp"
                         android:layout_height="wrap_content"
+                        android:focusable="true"
+                        android:focusableInTouchMode="true"
+                        android:singleLine="true"
+                        android:scrollHorizontally="true"
+                        android:ellipsize="marquee"
+                        android:marqueeRepeatLimit ="marquee_forever"
                         android:layout_gravity="center_vertical"
-                        android:text="Location"
+                        android:clickable="true"
                         android:fontFamily="@font/fredoka"
+                        android:text="Location"
                         android:textColor="@color/colorPrimary"
-                        android:clickable="true"/>
+                        android:layout_marginRight="10dp"
+                        android:layout_marginEnd="10dp"/>
 
                 </LinearLayout>
 
@@ -61,18 +68,25 @@
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:layout_margin="10dp"
-                        android:layout_weight="1"
                         android:src="@drawable/baseline_music_note_white_36"
                         android:tint="@color/colorPrimary"/>
 
                     <TextView
                         android:id="@+id/songView"
-                        android:layout_width="wrap_content"
+                        android:layout_width="210dp"
                         android:layout_height="wrap_content"
+                        android:focusable="true"
+                        android:focusableInTouchMode="true"
+                        android:singleLine="true"
+                        android:scrollHorizontally="true"
+                        android:ellipsize="marquee"
+                        android:marqueeRepeatLimit ="marquee_forever"
                         android:layout_gravity="center_vertical"
-                        android:text="Song"
                         android:fontFamily="@font/fredoka"
-                        android:textColor="@color/colorPrimary"/>
+                        android:text="Song"
+                        android:textColor="@color/colorPrimary"
+                        android:layout_marginRight="10dp"
+                        android:layout_marginEnd="10dp"/>
 
                 </LinearLayout>
 

@@ -362,7 +362,7 @@ public class MainActivity extends AppCompatActivity {
                         //ADD TO DB
                         Uri imageUri = Uri.fromFile(new File(currentPhotoPath));
                         //get della posizione da fare assolutamente in asynctask
-                        handler.addPic(imageUri.toString(), mypos, songname + "-" + artistname);
+                        handler.addPic(imageUri.toString(), mypos, songname + " - " + artistname);
                         db = handler.getWritableDatabase();
                         Cursor cursor = db.rawQuery("SELECT _id,* FROM pics", null);
                         adapter.changeCursor(cursor);

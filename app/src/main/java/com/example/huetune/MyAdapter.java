@@ -26,7 +26,9 @@ public class MyAdapter extends CursorAdapter {
         // Find fields to populate in inflated template
         ImageView myImg = view.findViewById(R.id.photoView);
         TextView myLoc = view.findViewById(R.id.locationView);
+        myLoc.setSelected(true);
         TextView mySong = view.findViewById(R.id.songView);
+        mySong.setSelected(true);
         // Extract properties from cursor
         String img = cursor.getString(cursor.getColumnIndexOrThrow("picuri"));
         String loc = cursor.getString(cursor.getColumnIndexOrThrow("location"));
