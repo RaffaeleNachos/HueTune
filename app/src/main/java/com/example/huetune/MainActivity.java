@@ -16,6 +16,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
@@ -30,11 +31,13 @@ import androidx.core.content.FileProvider;
 
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
 import android.widget.FilterQueryProvider;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -156,6 +159,16 @@ public class MainActivity extends AppCompatActivity {
         adapter = new MyAdapter(this, myCursor);
         lview.setAdapter(adapter);
 
+        lview.setOnItemClickListener(new ListView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adattatore, final View componente, int pos, long id){
+                List<Place.Field> fields = Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.ADDRESS, Place.Field.LAT_LNG);
+                // Start the autocomplete intent.
+                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fields).setCountry("IT").build(MainActivity.this);
+                startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE);
+            }
+        });
+
         //FILTER QUERY FOR SEARCH
         adapter.setFilterQueryProvider(new FilterQueryProvider() {
             @Override
@@ -179,6 +192,7 @@ public class MainActivity extends AppCompatActivity {
 
         //REST CALL TO SPOTIFY
         requestQueue = Volley.newRequestQueue(this);
+        getSpotifyToken();
     }
 
     //metod to add search and oth opt
@@ -201,10 +215,6 @@ public class MainActivity extends AppCompatActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             Toast.makeText(MainActivity.this, "Action settings clicked", Toast.LENGTH_LONG).show();
-            List<Place.Field> fields = Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.ADDRESS, Place.Field.LAT_LNG);
-            // Start the autocomplete intent.
-            Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fields).setCountry("IT").build(this);
-            startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE);
             return true;
         }
         if (id == R.id.action_search) {
@@ -325,6 +335,44 @@ public class MainActivity extends AppCompatActivity {
             return addresses.get(0).getLocality()+", "+addresses.get(0).getAdminArea();
         }
         return "Choose Position";
+    }
+
+    private void getSpotifyToken(){
+        String rest = "https://accounts.spotify.com/api/token";
+        StringRequest jsonreq = new StringRequest
+                (Request.Method.POST, rest, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.w("token", response);
+                    }
+                },
+                        new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                Log.w("errorresp", error.toString());
+                            }
+                        })
+        {
+            /** Passing some request headers* */
+            @Override
+            public Map getHeaders() throws AuthFailureError {
+                HashMap headers = new HashMap();
+                String mydashkey = "24ffb05d1e82431b91638ab90386fc84:710d0f96762c4d4ca6c81d97aec82556"; //trasformo codiceid:keyid di spotify in base 64
+                mydashkey = Base64.encodeToString(mydashkey.getBytes(), Base64.NO_WRAP); //nowrap per evitare \n
+                mydashkey = "Basic " + mydashkey;
+                Log.w("key", mydashkey);
+                headers.put("Authorization", mydashkey);
+                return headers;
+            }
+            @Override
+            protected Map<String, String> getParams()
+            {
+                Map<String, String>  params = new HashMap<String, String>();
+                params.put("grant_type", "client_credentials");
+                return params;
+            }
+        };
+        requestQueue.add(jsonreq);
     }
 
     private void mySpotifyGET(){

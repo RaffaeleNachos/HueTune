@@ -20,13 +20,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_margin="10dp">
+                android:layout_margin="10dp"
+                android:clickable="true">
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:clickable="true"
                     android:id="@+id/loclay">
 
                     <ImageView
@@ -48,7 +48,6 @@
                         android:ellipsize="marquee"
                         android:marqueeRepeatLimit ="marquee_forever"
                         android:layout_gravity="center_vertical"
-                        android:clickable="true"
                         android:fontFamily="@font/fredoka"
                         android:text="Location"
                         android:textColor="@color/colorPrimary"
@@ -61,7 +60,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:clickable="true"
                     android:id="@+id/songlay">
 
                     <ImageView
