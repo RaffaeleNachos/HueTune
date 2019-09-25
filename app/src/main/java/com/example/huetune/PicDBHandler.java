@@ -6,8 +6,11 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class PicDBHandler extends SQLiteOpenHelper {
 
@@ -50,6 +53,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
     private static final String KEY_PICS_GPS = "location";
     private static final String KEY_PICS_SONG = "song";
     private static final String KEY_PICS_SLINK = "slink";
+    private static final String KEY_PICS_DATE = "date";
 
 
     //Here context passed will be of application and not activity.
@@ -67,6 +71,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
                 + KEY_PICS_ID + " TEXT, "
                 + KEY_PICS_GPS + " TEXT, "
                 + KEY_PICS_SLINK + " TEXT, "
+                + KEY_PICS_DATE + " TEXT, "
                 + KEY_PICS_SONG + " TEXT " + ")";
 
         //Create table query executed in sqlite
@@ -157,26 +162,39 @@ public class PicDBHandler extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(KEY_PICS_ID, pic);
+        values.put(KEY_PICS_GPS, newloc);
 
         // updating student row
         return db.update(TABLE_PICS,
                 values,
-                KEY_PICS_GPS + " = ?",
-                new String[] { String.valueOf(newloc)});
+                KEY_PICS_ID + " = ?",
+                new String[] { String.valueOf(pic)});
 
     }
 
-    public void deletePic(String pic) {
+    public int deletePic(String pic) {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(TABLE_PICS, KEY_PICS_ID + " = ?",
-                new String[] { String.valueOf(pic) });
-        db.close();
+        String timeStamp = new SimpleDateFormat("dd/MM/yyyy", Locale.ITALY).format(new Date());
+
+        ContentValues values = new ContentValues();
+        values.put(KEY_PICS_DATE, timeStamp);
+
+        return db.update(TABLE_PICS,
+                values,
+                KEY_PICS_ID + " = ?",
+                new String[] { String.valueOf(pic)});
     }
 
     public void deleteAllPics() {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL("DELETE FROM " + TABLE_PICS);
+        String timeStamp = new SimpleDateFormat("dd/MM/yyyy", Locale.ITALY).format(new Date());
+        db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + timeStamp);
+        db.close();
+    }
+
+    public void resumeAllPics() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + "NULL");
         db.close();
     }
 }

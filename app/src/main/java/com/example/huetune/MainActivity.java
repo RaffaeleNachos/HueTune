@@ -74,12 +74,14 @@ public class MainActivity extends AppCompatActivity {
     private Cursor myCursor;
     private SQLiteDatabase db;
     private String currentPhotoPath;
+    private String currentPosition;
     private SearchView searchvw;
     private Geocoder geocoder;
     private List<Address> addresses;
     private RequestQueue requestQueue;
     private String requrl = "https://api.spotify.com/v1/search?";
     private String sessionToken = null;
+    private ListView lview;
 
 
     @Override
@@ -155,9 +157,9 @@ public class MainActivity extends AppCompatActivity {
         handler = new PicDBHandler(this);
 
         db = handler.getWritableDatabase();
-        myCursor = db.rawQuery("SELECT _id,* FROM pics", null);
+        myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
 
-        ListView lview = findViewById(R.id.listview);
+        lview = findViewById(R.id.listview);
         adapter = new MyAdapter(this, myCursor);
         lview.setAdapter(adapter);
 
@@ -168,8 +170,7 @@ public class MainActivity extends AppCompatActivity {
         adapter.setFilterQueryProvider(new FilterQueryProvider() {
             @Override
             public Cursor runQuery(CharSequence constraint) {
-                String query = "SELECT _id,* FROM pics "
-                        + "where location like '%" + constraint + "%' ";
+                String query = "SELECT _id,* FROM pics WHERE date IS NULL and location like '%" + constraint + "%' ";
                 return db.rawQuery(query, null);
             }
         });
@@ -179,10 +180,8 @@ public class MainActivity extends AppCompatActivity {
         //testare se geocoder è presente nel paese DA FARE
 
         //API FOR PLACE AUTOCOMPLETE
-        String apiKey = getString(R.string.myapikey);
-
         if (!Places.isInitialized()) {
-            Places.initialize(getApplicationContext(), apiKey);
+            Places.initialize(getApplicationContext(), "AIzaSyCpyTKh4KmzLSWMV1jiD-S2FADGxtXLKC4");
         }
 
         //REST CALL TO SPOTIFY
@@ -237,15 +236,18 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         if (id == R.id.action_del) {
-            Snackbar sbar = Snackbar.make(findViewById(R.id.myFABLayout), "Deleting all photos", Snackbar.LENGTH_LONG);
-            LinearLayout llc = findViewById(R.id.llc);
-            LinearLayout llg = findViewById(R.id.llg);
+            Snackbar sbar = Snackbar.make(findViewById(R.id.myFABLayout), "All Photos Deleted", Snackbar.LENGTH_LONG);
             sbar.setAction("UNDO", new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Toast.makeText(getApplicationContext(), "Undo action", Toast.LENGTH_SHORT).show();
+                    handler.resumeAllPics();
+                    db = handler.getWritableDatabase();
+                    Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+                    adapter.changeCursor(cursor);
                 }
             });
+            LinearLayout llc = findViewById(R.id.llc);
+            LinearLayout llg = findViewById(R.id.llg);
             llc.setVisibility(View.INVISIBLE);
             llg.setVisibility(View.INVISIBLE);
             btncam.setClickable(false);
@@ -257,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
             clickadd=false;
             handler.deleteAllPics();
             db = handler.getWritableDatabase();
-            Cursor cursor = db.rawQuery("SELECT _id,* FROM pics", null);
+            Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
             adapter.changeCursor(cursor);
             sbar.show();
         }
@@ -277,9 +279,12 @@ public class MainActivity extends AppCompatActivity {
         switch(item.getItemId()){
             case R.id.cm_id_change:
                 Toast.makeText(this, "change"  , Toast.LENGTH_SHORT).show();
-                List<Place.Field> fields = Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.ADDRESS, Place.Field.LAT_LNG);
-                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fields).setCountry("IT").build(MainActivity.this);
+                AUTOCOMPLETE_REQUEST_CODE = 3;
+                List<Place.Field> fields = Arrays.asList(Place.Field.ID, Place.Field.NAME);
+                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fields).setCountry("IT").build(MainActivity.this);
                 startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE);
+                handler.updatePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")), currentPosition);
+                adapter.notifyDataSetChanged();
                 break;
             case R.id.cm_id_play:
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW,Uri.parse(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("slink"))));
@@ -292,10 +297,9 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "delete " , Toast.LENGTH_SHORT).show();
                 handler.deletePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")));
                 db = handler.getWritableDatabase();
-                Cursor cursor = db.rawQuery("SELECT _id,* FROM pics", null);
+                Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
                 adapter.changeCursor(cursor);
                 break;
-
         }
         return true;
     }
@@ -308,7 +312,7 @@ public class MainActivity extends AppCompatActivity {
             Uri imageUri = data.getData();
             handler.addPic(imageUri.toString(), "Choose Position", "Song", "Songlink");
             db = handler.getWritableDatabase();
-            Cursor cursor = db.rawQuery("SELECT _id,* FROM pics", null);
+            Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
             adapter.changeCursor(cursor);
         }
         if (requestCode == TAKE_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
@@ -316,8 +320,8 @@ public class MainActivity extends AppCompatActivity {
         }
         if (requestCode == AUTOCOMPLETE_REQUEST_CODE && resultCode == Activity.RESULT_OK){
             Place place = Autocomplete.getPlaceFromIntent(data);
-            Log.i("autocomplete", "Place: " + place.getName() + ", " + place.getId());
-            String address = place.getAddress();
+            currentPosition = place.getName();
+            Log.w("positionchoosen", currentPosition);
         }
     }
 
@@ -346,7 +350,7 @@ public class MainActivity extends AppCompatActivity {
     //most from developer.android doc
     private File createImageFile() throws IOException {
         // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ITALY).format(new Date());
         String imageFileName = "HUETUNE_" + timeStamp + "_";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         File image = File.createTempFile(
@@ -462,7 +466,7 @@ public class MainActivity extends AppCompatActivity {
                         //get della posizione da fare assolutamente in asynctask
                         handler.addPic(imageUri.toString(), mypos, songname + " - " + artistname, songlink);
                         db = handler.getWritableDatabase();
-                        Cursor cursor = db.rawQuery("SELECT _id,* FROM pics", null);
+                        Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
                         adapter.changeCursor(cursor);
                     }
                 }, new Response.ErrorListener() {
