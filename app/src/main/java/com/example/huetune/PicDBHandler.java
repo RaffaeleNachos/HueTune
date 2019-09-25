@@ -49,6 +49,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
     private static final String KEY_PICS_ID = "picuri";
     private static final String KEY_PICS_GPS = "location";
     private static final String KEY_PICS_SONG = "song";
+    private static final String KEY_PICS_SLINK = "slink";
 
 
     //Here context passed will be of application and not activity.
@@ -65,6 +66,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
                 + "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + KEY_PICS_ID + " TEXT, "
                 + KEY_PICS_GPS + " TEXT, "
+                + KEY_PICS_SLINK + " TEXT, "
                 + KEY_PICS_SONG + " TEXT " + ")";
 
         //Create table query executed in sqlite
@@ -87,13 +89,14 @@ public class PicDBHandler extends SQLiteOpenHelper {
      */
 
     // Add New Student
-    public void addPic(String uri, String location, String song) {
+    public void addPic(String uri, String location, String song, String slink) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         //Content values use KEY-VALUE pair concept
         ContentValues values = new ContentValues();
         values.put(KEY_PICS_ID, uri);
         values.put(KEY_PICS_GPS, location);
+        values.put(KEY_PICS_SLINK, slink);
         values.put(KEY_PICS_SONG, song);
 
         db.insert(TABLE_PICS, null, values);

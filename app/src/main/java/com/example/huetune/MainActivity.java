@@ -187,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
 
         //REST CALL TO SPOTIFY
         requestQueue = Volley.newRequestQueue(this);
-        //getSpotifyToken();
+        getSpotifyToken();
     }
 
     //metod to add search and oth opt threedots
@@ -293,7 +293,7 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
             Uri imageUri = data.getData();
-            handler.addPic(imageUri.toString(), "Choose Position", "Song");
+            handler.addPic(imageUri.toString(), "Choose Position", "Song", "Songlink");
             db = handler.getWritableDatabase();
             Cursor cursor = db.rawQuery("SELECT _id,* FROM pics", null);
             adapter.changeCursor(cursor);
@@ -447,7 +447,7 @@ public class MainActivity extends AppCompatActivity {
                         //ADD TO DB
                         Uri imageUri = Uri.fromFile(new File(currentPhotoPath));
                         //get della posizione da fare assolutamente in asynctask
-                        handler.addPic(imageUri.toString(), mypos, songname + " - " + artistname);
+                        handler.addPic(imageUri.toString(), mypos, songname + " - " + artistname, songlink);
                         db = handler.getWritableDatabase();
                         Cursor cursor = db.rawQuery("SELECT _id,* FROM pics", null);
                         adapter.changeCursor(cursor);
