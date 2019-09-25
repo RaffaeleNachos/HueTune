@@ -2,8 +2,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.huetune.MainActivity" >
-    <item android:id="@+id/action_settings"
-        android:title="@string/action_settings"/>
+    <item android:id="@+id/action_bin"
+        android:title="@string/action_bin"/>
     <item android:id="@+id/action_del"
         android:title="@string/action_del"/>
     <item

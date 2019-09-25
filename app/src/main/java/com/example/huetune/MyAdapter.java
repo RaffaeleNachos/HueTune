@@ -38,5 +38,6 @@ public class MyAdapter extends CursorAdapter {
         myLoc.setText(String.valueOf(loc));
         mySong.setText(String.valueOf(tune));
     }
+
 }
 

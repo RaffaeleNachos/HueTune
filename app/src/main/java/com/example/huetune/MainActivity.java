@@ -33,6 +33,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -156,19 +157,12 @@ public class MainActivity extends AppCompatActivity {
         db = handler.getWritableDatabase();
         myCursor = db.rawQuery("SELECT _id,* FROM pics", null);
 
-        final ListView lview = findViewById(R.id.listview);
+        ListView lview = findViewById(R.id.listview);
         adapter = new MyAdapter(this, myCursor);
         lview.setAdapter(adapter);
 
-        lview.setOnItemClickListener(new ListView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adattatore, final View componente, int pos, long id){
-                List<Place.Field> fields = Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.ADDRESS, Place.Field.LAT_LNG);
-                // Start the autocomplete intent.
-                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fields).setCountry("IT").build(MainActivity.this);
-                startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE);
-            }
-        });
+        //attivo menu contestuale floating
+        registerForContextMenu(lview);
 
         //FILTER QUERY FOR SEARCH
         adapter.setFilterQueryProvider(new FilterQueryProvider() {
@@ -193,10 +187,10 @@ public class MainActivity extends AppCompatActivity {
 
         //REST CALL TO SPOTIFY
         requestQueue = Volley.newRequestQueue(this);
-        getSpotifyToken();
+        //getSpotifyToken();
     }
 
-    //metod to add search and oth opt
+    //metod to add search and oth opt threedots
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -206,6 +200,14 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    //menu per listview
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        getMenuInflater().inflate(R.menu.cm_actions , menu);
+    }
+
+    //selection threedots menu
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -214,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_bin) {
             Toast.makeText(MainActivity.this, "Action settings clicked", Toast.LENGTH_LONG).show();
             return true;
         }
@@ -257,6 +259,33 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    //pressione lunga su item
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+
+        switch(item.getItemId()){
+            case R.id.cm_id_change:
+                Toast.makeText(this, "change"  , Toast.LENGTH_SHORT).show();
+                List<Place.Field> fields = Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.ADDRESS, Place.Field.LAT_LNG);
+                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fields).setCountry("IT").build(MainActivity.this);
+                startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE);
+                break;
+            case R.id.cm_id_play:
+                Toast.makeText(this, "play"   , Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.cm_id_btshare:
+                Toast.makeText(this, "btshare"   , Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.cm_id_delete:
+                Toast.makeText(this, "delete " , Toast.LENGTH_SHORT).show();
+                break;
+
+        }
+        return true;
     }
 
     @Override
@@ -360,7 +389,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         })
         {
-            /** Passing some request headers* */
+            // -H parametes
             @Override
             public Map getHeaders() throws AuthFailureError {
                 HashMap headers = new HashMap();
@@ -371,6 +400,7 @@ public class MainActivity extends AppCompatActivity {
                 headers.put("Authorization", mydashkey);
                 return headers;
             }
+            // -d parameters
             @Override
             protected Map<String, String> getParams()
             {
@@ -431,7 +461,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
         {
-            /** Passing some request headers* */
             @Override
             public Map getHeaders() throws AuthFailureError {
                 HashMap headers = new HashMap();
