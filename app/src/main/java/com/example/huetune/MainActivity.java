@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.media.ExifInterface;
@@ -18,15 +19,11 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.android.gms.common.api.Status;
-import com.google.android.libraries.places.api.Places;
-import com.google.android.libraries.places.api.model.Place;
-import com.google.android.libraries.places.widget.Autocomplete;
-import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
-import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
-import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.mapbox.api.geocoding.v5.models.CarmenFeature;
+import com.mapbox.mapboxsdk.plugins.places.autocomplete.PlaceAutocomplete;
+import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -184,9 +181,6 @@ public class MainActivity extends AppCompatActivity {
         //testare se geocoder è presente nel paese DA FARE
 
         //API FOR PLACE AUTOCOMPLETE
-        if (!Places.isInitialized()) {
-            Places.initialize(getApplicationContext(), "AIzaSyCpyTKh4KmzLSWMV1jiD-S2FADGxtXLKC4");
-        }
 
         //REST CALL TO SPOTIFY
         requestQueue = Volley.newRequestQueue(this);
@@ -283,8 +277,13 @@ public class MainActivity extends AppCompatActivity {
         switch(item.getItemId()){
             case R.id.cm_id_change:
                 AUTOCOMPLETE_REQUEST_CODE = 3;
-                List<Place.Field> fields = Arrays.asList(Place.Field.ID, Place.Field.NAME);
-                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fields).build(this);
+                Intent intent = new PlaceAutocomplete.IntentBuilder()
+                        .accessToken("pk.eyJ1IjoibmFjaG9zZnB2IiwiYSI6ImNrMHp2Z213NTA1M3ozY25xNG5vMzh0Nm4ifQ.RlsNT4-jUqoKP85bMOUZjg")
+                        .placeOptions(PlaceOptions.builder()
+                                .backgroundColor(Color.parseColor("#EEEEEE"))
+                                .limit(10)
+                                .build(PlaceOptions.MODE_CARDS))
+                        .build(this);
                 startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE);
                 break;
             case R.id.cm_id_play:
@@ -320,8 +319,8 @@ public class MainActivity extends AppCompatActivity {
             mySpotifyGET();
         }
         if (requestCode == AUTOCOMPLETE_REQUEST_CODE && resultCode==Activity.RESULT_OK) {
-            Place place = Autocomplete.getPlaceFromIntent(data);
-            handler.updatePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")), place.getName());
+            CarmenFeature feature = PlaceAutocomplete.getPlace(data);
+            handler.updatePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")), feature.placeName());
             db = handler.getWritableDatabase();
             Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
             adapter.changeCursor(cursor);
