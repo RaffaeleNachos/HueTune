@@ -18,14 +18,9 @@
         app:theme="@style/AppTheme.AppBarOverlay"
         app:popupTheme="@style/AppTheme.PopupOverlay"
         android:elevation="4dp"
-        app:titleTextAppearance="@style/TitleBarTextAppearance"/>
+        app:titleTextAppearance="@style/TitleBarTextAppearance">
 
-
-    <fragment android:id="@+id/autocomplete_fragment"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
-        />
+    </androidx.appcompat.widget.Toolbar>
 
     <ListView
         android:layout_width="match_parent"

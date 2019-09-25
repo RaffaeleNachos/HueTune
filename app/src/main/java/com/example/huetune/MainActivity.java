@@ -18,9 +18,12 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.common.api.Status;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.Autocomplete;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -74,7 +77,6 @@ public class MainActivity extends AppCompatActivity {
     private Cursor myCursor;
     private SQLiteDatabase db;
     private String currentPhotoPath;
-    private String currentPosition;
     private SearchView searchvw;
     private Geocoder geocoder;
     private List<Address> addresses;
@@ -82,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
     private String requrl = "https://api.spotify.com/v1/search?";
     private String sessionToken = null;
     private ListView lview;
+    private Cursor tmpcursor;
+
 
 
     @Override
@@ -269,22 +273,19 @@ public class MainActivity extends AppCompatActivity {
 
     //pressione lunga su item
     @Override
-    public boolean onContextItemSelected(MenuItem item) {
+    public boolean onContextItemSelected(final MenuItem item) {
 
         AdapterView.AdapterContextMenuInfo info= (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
         int itemPosition = info.position;
-        Cursor tmpcursor = adapter.getCursor();
+        tmpcursor = adapter.getCursor();
         tmpcursor.moveToPosition(itemPosition);
 
         switch(item.getItemId()){
             case R.id.cm_id_change:
-                Toast.makeText(this, "change"  , Toast.LENGTH_SHORT).show();
                 AUTOCOMPLETE_REQUEST_CODE = 3;
                 List<Place.Field> fields = Arrays.asList(Place.Field.ID, Place.Field.NAME);
-                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fields).setCountry("IT").build(MainActivity.this);
+                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fields).build(this);
                 startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE);
-                handler.updatePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")), currentPosition);
-                adapter.notifyDataSetChanged();
                 break;
             case R.id.cm_id_play:
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW,Uri.parse(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("slink"))));
@@ -318,10 +319,12 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == TAKE_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
             mySpotifyGET();
         }
-        if (requestCode == AUTOCOMPLETE_REQUEST_CODE && resultCode == Activity.RESULT_OK){
+        if (requestCode == AUTOCOMPLETE_REQUEST_CODE && resultCode==Activity.RESULT_OK) {
             Place place = Autocomplete.getPlaceFromIntent(data);
-            currentPosition = place.getName();
-            Log.w("positionchoosen", currentPosition);
+            handler.updatePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")), place.getName());
+            db = handler.getWritableDatabase();
+            Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+            adapter.changeCursor(cursor);
         }
     }
 
