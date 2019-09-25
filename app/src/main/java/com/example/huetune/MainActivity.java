@@ -255,6 +255,10 @@ public class MainActivity extends AppCompatActivity {
                 llg.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_exp_close));
             }
             clickadd=false;
+            handler.deleteAllPics();
+            db = handler.getWritableDatabase();
+            Cursor cursor = db.rawQuery("SELECT _id,* FROM pics", null);
+            adapter.changeCursor(cursor);
             sbar.show();
         }
 
@@ -265,7 +269,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onContextItemSelected(MenuItem item) {
 
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        AdapterView.AdapterContextMenuInfo info= (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
+        int itemPosition = info.position;
+        Cursor tmpcursor = adapter.getCursor();
+        tmpcursor.moveToPosition(itemPosition);
 
         switch(item.getItemId()){
             case R.id.cm_id_change:
@@ -275,13 +282,18 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE);
                 break;
             case R.id.cm_id_play:
-                Toast.makeText(this, "play"   , Toast.LENGTH_SHORT).show();
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW,Uri.parse(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("slink"))));
+                startActivity(browserIntent);
                 break;
             case R.id.cm_id_btshare:
                 Toast.makeText(this, "btshare"   , Toast.LENGTH_SHORT).show();
                 break;
             case R.id.cm_id_delete:
                 Toast.makeText(this, "delete " , Toast.LENGTH_SHORT).show();
+                handler.deletePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")));
+                db = handler.getWritableDatabase();
+                Cursor cursor = db.rawQuery("SELECT _id,* FROM pics", null);
+                adapter.changeCursor(cursor);
                 break;
 
         }
@@ -291,6 +303,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        //TAKE FROM GALLERY ANCORA NON FUNZIONANTE ASPETTO INTEGRAZIONE AI
         if (requestCode == PICK_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
             Uri imageUri = data.getData();
             handler.addPic(imageUri.toString(), "Choose Position", "Song", "Songlink");
