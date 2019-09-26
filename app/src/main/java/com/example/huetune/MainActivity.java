@@ -53,7 +53,6 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -78,10 +77,10 @@ public class MainActivity extends AppCompatActivity {
     private Geocoder geocoder;
     private List<Address> addresses;
     private RequestQueue requestQueue;
-    private String requrl = "https://api.spotify.com/v1/search?";
     private String sessionToken = null;
     private ListView lview;
     private Cursor tmpcursor;
+    private Integer itemPosition;
 
 
 
@@ -178,16 +177,14 @@ public class MainActivity extends AppCompatActivity {
 
         //POSITION
         geocoder = new Geocoder(this, Locale.getDefault());
-        //testare se geocoder è presente nel paese DA FARE
-
-        //API FOR PLACE AUTOCOMPLETE
+        //TODO testare se geocoder è presente nel paese
 
         //REST CALL TO SPOTIFY
         requestQueue = Volley.newRequestQueue(this);
         getSpotifyToken();
     }
 
-    //metod to add search and oth opt threedots
+    //inflate in toolbar
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -197,22 +194,18 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    //menu per listview
+    //inflate custom menu fro listview item
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         getMenuInflater().inflate(R.menu.cm_actions , menu);
     }
 
-    //selection threedots menu
+    //select toolbar menu
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_bin) {
             Toast.makeText(MainActivity.this, "Action settings clicked", Toast.LENGTH_LONG).show();
             return true;
@@ -260,50 +253,59 @@ public class MainActivity extends AppCompatActivity {
             Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
             adapter.changeCursor(cursor);
             sbar.show();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    //pressione lunga su item
+    //long press on item in listview
     @Override
-    public boolean onContextItemSelected(final MenuItem item) {
+    public boolean onContextItemSelected(MenuItem item) {
 
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
-        int itemPosition = info.position;
-        tmpcursor = adapter.getCursor();
-        tmpcursor.moveToPosition(itemPosition);
+        itemPosition = info.position;
 
-        switch(item.getItemId()){
-            case R.id.cm_id_change:
-                AUTOCOMPLETE_REQUEST_CODE = 3;
-                Intent intent = new PlaceAutocomplete.IntentBuilder()
-                        .accessToken("pk.eyJ1IjoibmFjaG9zZnB2IiwiYSI6ImNrMHp2Z213NTA1M3ozY25xNG5vMzh0Nm4ifQ.RlsNT4-jUqoKP85bMOUZjg")
-                        .placeOptions(PlaceOptions.builder()
-                                .backgroundColor(Color.parseColor("#EEEEEE"))
-                                .limit(10)
-                                .build(PlaceOptions.MODE_CARDS))
-                        .build(this);
-                startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE);
-                break;
-            case R.id.cm_id_play:
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW,Uri.parse(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("slink"))));
-                startActivity(browserIntent);
-                break;
-            case R.id.cm_id_btshare:
-                Toast.makeText(this, "btshare"   , Toast.LENGTH_SHORT).show();
-                break;
-            case R.id.cm_id_delete:
-                Toast.makeText(this, "delete " , Toast.LENGTH_SHORT).show();
-                handler.deletePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")));
-                db = handler.getWritableDatabase();
-                Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
-                adapter.changeCursor(cursor);
-                break;
+        int id = item.getItemId();
+        if(id == R.id.cm_id_change) {
+            AUTOCOMPLETE_REQUEST_CODE = 3;
+            Intent intent = new PlaceAutocomplete.IntentBuilder()
+                    .accessToken("pk.eyJ1IjoibmFjaG9zZnB2IiwiYSI6ImNrMHp2Z213NTA1M3ozY25xNG5vMzh0Nm4ifQ.RlsNT4-jUqoKP85bMOUZjg")
+                    .placeOptions(PlaceOptions.builder()
+                            .backgroundColor(Color.parseColor("#EEEEEE"))
+                            .limit(10)
+                            .build(PlaceOptions.MODE_CARDS))
+                    .build(this);
+            startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE);
+            return true;
         }
-        return true;
+        if(id == R.id.cm_id_play) {
+            tmpcursor = adapter.getCursor();
+            tmpcursor.moveToPosition(itemPosition);
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("slink"))));
+            startActivity(browserIntent);
+            return true;
+        }
+        if(id == R.id.cm_id_btshare) {
+            tmpcursor = adapter.getCursor();
+            tmpcursor.moveToPosition(itemPosition);
+            Toast.makeText(this, "btshare", Toast.LENGTH_SHORT).show();
+            Log.w("item number", itemPosition.toString());
+            return true;
+        }
+        if(id == R.id.cm_id_delete) {
+            tmpcursor = adapter.getCursor();
+            tmpcursor.moveToPosition(itemPosition);
+            handler.deletePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")));
+            db = handler.getWritableDatabase();
+            Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+            adapter.changeCursor(cursor);
+            return true;
+        }
+        return super.onContextItemSelected(item);
     }
 
+    //on activity intent result
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -319,6 +321,8 @@ public class MainActivity extends AppCompatActivity {
             mySpotifyGET();
         }
         if (requestCode == AUTOCOMPLETE_REQUEST_CODE && resultCode==Activity.RESULT_OK) {
+            tmpcursor = adapter.getCursor();
+            tmpcursor.moveToPosition(itemPosition);
             CarmenFeature feature = PlaceAutocomplete.getPlace(data);
             handler.updatePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")), feature.placeName());
             db = handler.getWritableDatabase();
@@ -327,12 +331,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //take image from grallery
     private void reqImageG(){
         PICK_IMAGE_REQUEST = 1;
         Intent picki = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         picki.setType("image/*");
         startActivityForResult(picki, PICK_IMAGE_REQUEST);
     }
+    //take image from camera
     private void reqImageC() {
         TAKE_IMAGE_REQUEST = 2;
         Intent takei = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -349,7 +355,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //most from developer.android doc
+    //most from developer.android doc create file image when captured on camera
     private File createImageFile() throws IOException {
         // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ITALY).format(new Date());
@@ -366,6 +372,7 @@ public class MainActivity extends AppCompatActivity {
         return image;
     }
 
+    //position taken from exif data
     private String getMyPosition(String inputfile) {
         ExifInterface myexif = null;
         try {
@@ -386,6 +393,7 @@ public class MainActivity extends AppCompatActivity {
         return "Choose Position";
     }
 
+    //get session token from soptify web api call
     private void getSpotifyToken(){
         String rest = "https://accounts.spotify.com/api/token";
         StringRequest jsonreq = new StringRequest  //uso stringrequest perchè JSONObjreq fa override di getparams() e non chiama il metodo
@@ -431,9 +439,10 @@ public class MainActivity extends AppCompatActivity {
         requestQueue.add(jsonreq);
     }
 
+    //search call web api spotify
     private void mySpotifyGET(){
         final String mypos = getMyPosition(currentPhotoPath);
-        requrl = requrl + "q=" + mypos + "&type=track&market=IT&limit=1&offset=0";
+        String requrl = "https://api.spotify.com/v1/search?q=" + mypos + "&type=track&market=IT&limit=1&offset=0";
         JsonObjectRequest jsonreq = new JsonObjectRequest
                 (Request.Method.GET, requrl, null, new Response.Listener<JSONObject>() {
 
