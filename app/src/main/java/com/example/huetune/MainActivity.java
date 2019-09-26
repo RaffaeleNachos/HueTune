@@ -269,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onContextItemSelected(final MenuItem item) {
 
-        AdapterView.AdapterContextMenuInfo info= (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
         int itemPosition = info.position;
         tmpcursor = adapter.getCursor();
         tmpcursor.moveToPosition(itemPosition);
