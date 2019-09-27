@@ -5,6 +5,10 @@
         android:title="@string/cm_change"
         />
     <item
+        android:id="@+id/cm_id_curr"
+        android:title="@string/cm_curr"
+        />
+    <item
         android:id="@+id/cm_id_play"
         android:title="@string/cm_play"
         />

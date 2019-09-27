@@ -55,6 +55,9 @@ public class PicDBHandler extends SQLiteOpenHelper {
     private static final String KEY_PICS_SLINK = "slink";
     private static final String KEY_PICS_DATE = "date";
 
+    //last deleted pic and pics
+    private String lastdeletedpic = null;
+
 
     //Here context passed will be of application and not activity.
     public PicDBHandler(Context context) {
@@ -68,7 +71,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
         String CREATE_PICS_TABLE = "CREATE TABLE IF NOT EXISTS "
                 + TABLE_PICS + " ("
                 + "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + KEY_PICS_ID + " TEXT, "
+                + KEY_PICS_ID + " TEXT NOT NULL UNIQUE, "
                 + KEY_PICS_GPS + " TEXT, "
                 + KEY_PICS_SLINK + " TEXT, "
                 + KEY_PICS_DATE + " TEXT, "
@@ -89,12 +92,8 @@ public class PicDBHandler extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    /**
-     * All CRUD(Create, Read, Update, Delete) Operations
-     */
-
     // Add New Student
-    public void addPic(String uri, String location, String song, String slink) {
+    public int addPic(String uri, String location, String song, String slink) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         //Content values use KEY-VALUE pair concept
@@ -104,8 +103,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
         values.put(KEY_PICS_SLINK, slink);
         values.put(KEY_PICS_SONG, song);
 
-        db.insert(TABLE_PICS, null, values);
-        db.close();
+        return (int)db.insert(TABLE_PICS, null, values);
     }
 
     // Getting single student details through ID
@@ -173,6 +171,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
     }
 
     public int deletePic(String pic) {
+        lastdeletedpic = pic;
         SQLiteDatabase db = this.getWritableDatabase();
         String timeStamp = new SimpleDateFormat("dd/MM/yyyy", Locale.ITALY).format(new Date());
 
@@ -183,6 +182,11 @@ public class PicDBHandler extends SQLiteOpenHelper {
                 values,
                 KEY_PICS_ID + " = ?",
                 new String[] { String.valueOf(pic)});
+    }
+
+    public void resumePic(){
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + "NULL" + " WHERE " + KEY_PICS_ID + " = " + "\"" + lastdeletedpic + "\"");
     }
 
     public void deleteAllPics() {

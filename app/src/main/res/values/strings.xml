@@ -4,8 +4,9 @@
     <string name="action_del">Delete All Photos</string>
     <string name="action_search">Search</string>
     <string name="myapikey">AIzaSyCpyTKh4KmzLSWMV1jiD-S2FADGxtXLKC4</string>
-    <string name="cm_change">Change Location</string>
+    <string name="cm_change">Choose Location</string>
     <string name="cm_play">Play</string>
     <string name="cm_btshare">Bluetooth Share</string>
     <string name="cm_delete">Delete Photo</string>
+    <string name="cm_curr">Use Current Location</string>
 </resources>

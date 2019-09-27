@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.Location;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
@@ -19,6 +20,9 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.mapbox.api.geocoding.v5.models.CarmenFeature;
@@ -81,8 +85,12 @@ public class MainActivity extends AppCompatActivity {
     private ListView lview;
     private Cursor tmpcursor;
     private Integer itemPosition;
+    private FusedLocationProviderClient fusedLocationClient;
 
-
+    //TODO add AI
+    //TODO use lower resolution in listview
+    //TODO use async queries
+    //TODO check if there's an alternative to use new cursor with new query everytime
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +101,6 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         //FAB
-
         btncam = findViewById(R.id.addc);
         llc = findViewById(R.id.llc);
         btncam.setOnClickListener(new View.OnClickListener() {
@@ -175,9 +182,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //POSITION
+        //POSITION AND GPS WITH PLAY SERVICES BATTERY SAVEEEEEEE
         geocoder = new Geocoder(this, Locale.getDefault());
         //TODO testare se geocoder è presente nel paese
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
 
         //REST CALL TO SPOTIFY
         requestQueue = Volley.newRequestQueue(this);
@@ -207,7 +216,11 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.action_bin) {
-            Toast.makeText(MainActivity.this, "Action settings clicked", Toast.LENGTH_LONG).show();
+            Snackbar sbar = Snackbar.make(findViewById(R.id.myFABLayout), "All Photos Deleted", Snackbar.LENGTH_INDEFINITE);
+            db = handler.getWritableDatabase();
+            Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NOT NULL", null);
+            adapter.changeCursor(cursor);
+            sbar.show();
             return true;
         }
         if (id == R.id.action_search) {
@@ -227,6 +240,7 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         if (id == R.id.action_del) {
+            //TODO send an array with uris and delete them, or restore only them
             Snackbar sbar = Snackbar.make(findViewById(R.id.myFABLayout), "All Photos Deleted", Snackbar.LENGTH_LONG);
             sbar.setAction("UNDO", new View.OnClickListener() {
                 @Override
@@ -267,6 +281,24 @@ public class MainActivity extends AppCompatActivity {
         itemPosition = info.position;
 
         int id = item.getItemId();
+        if(id == R.id.cm_id_curr) {
+            tmpcursor = adapter.getCursor();
+            tmpcursor.moveToPosition(itemPosition);
+            fusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            // Got last known location. In some rare situations this can be null.
+                            if (location != null) {
+                                handler.updatePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")),location.toString());
+                                db = handler.getWritableDatabase();
+                                Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+                                adapter.changeCursor(cursor);
+                            }
+                        }
+                    });
+            return true;
+        }
         if(id == R.id.cm_id_change) {
             AUTOCOMPLETE_REQUEST_CODE = 3;
             Intent intent = new PlaceAutocomplete.IntentBuilder()
@@ -290,16 +322,37 @@ public class MainActivity extends AppCompatActivity {
             tmpcursor = adapter.getCursor();
             tmpcursor.moveToPosition(itemPosition);
             Toast.makeText(this, "btshare", Toast.LENGTH_SHORT).show();
-            Log.w("item number", itemPosition.toString());
             return true;
         }
         if(id == R.id.cm_id_delete) {
             tmpcursor = adapter.getCursor();
             tmpcursor.moveToPosition(itemPosition);
+            Snackbar sbar = Snackbar.make(findViewById(R.id.myFABLayout), "Photo Deleted", Snackbar.LENGTH_LONG);
+            sbar.setAction("UNDO", new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    handler.resumePic();
+                    db = handler.getWritableDatabase();
+                    Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+                    adapter.changeCursor(cursor);
+                }
+            });
+            LinearLayout llc = findViewById(R.id.llc);
+            LinearLayout llg = findViewById(R.id.llg);
+            llc.setVisibility(View.INVISIBLE);
+            llg.setVisibility(View.INVISIBLE);
+            btncam.setClickable(false);
+            btngal.setClickable(false);
+            if(clickadd) {
+                llc.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_exp_close));
+                llg.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_exp_close));
+            }
+            clickadd=false;
             handler.deletePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")));
             db = handler.getWritableDatabase();
             Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
             adapter.changeCursor(cursor);
+            sbar.show();
             return true;
         }
         return super.onContextItemSelected(item);
@@ -312,7 +365,9 @@ public class MainActivity extends AppCompatActivity {
         //TAKE FROM GALLERY ANCORA NON FUNZIONANTE ASPETTO INTEGRAZIONE AI
         if (requestCode == PICK_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
             Uri imageUri = data.getData();
-            handler.addPic(imageUri.toString(), "Choose Position", "Song", "Songlink");
+            if(handler.addPic(imageUri.toString(), "Choose Position", "Song", "Songlink") == -1){
+                Toast.makeText(this, "Photo already present", Toast.LENGTH_SHORT).show();
+            }
             db = handler.getWritableDatabase();
             Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
             adapter.changeCursor(cursor);
@@ -366,8 +421,6 @@ public class MainActivity extends AppCompatActivity {
                 ".jpg",         /* suffix */
                 storageDir      /* directory */
         );
-
-        // Save a file: path for use with ACTION_VIEW intents
         currentPhotoPath = image.getAbsolutePath();
         return image;
     }
@@ -388,7 +441,7 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return addresses.get(0).getLocality()+", "+addresses.get(0).getAdminArea();
+            return addresses.get(0).getLocality() + ", " + addresses.get(0).getAdminArea();
         }
         return "Choose Position";
     }
@@ -413,6 +466,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onErrorResponse(VolleyError error) {
                                 Log.w("errorresp", error.toString());
+                                Toast.makeText(MainActivity.this, "Spotify Token not received, Restart App", Toast.LENGTH_SHORT);
                             }
                         })
         {
@@ -484,8 +538,9 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
                         Log.w("errorresp", error.toString());
+                        //ADD TO DB WITH ERROR
+                        Toast.makeText(MainActivity.this, "Spotify Response Error", Toast.LENGTH_SHORT);
                     }
                 })
         {
