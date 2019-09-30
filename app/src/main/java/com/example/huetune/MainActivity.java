@@ -91,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
     //TODO use lower resolution in listview
     //TODO use async queries
     //TODO check if there's an alternative to use new cursor with new query everytime
+    //TODO ask for user permissions
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 llc.setVisibility(View.INVISIBLE);
                 llg.setVisibility(View.INVISIBLE);
+                //bug noto rotazione shadow https://issuetracker.google.com/issues/132569416 possibile soluzione applicare animazione a singoli elementi textview e fab
                 llc.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_exp_close));
                 llg.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_exp_close));
                 btncam.setClickable(false);
