@@ -1,7 +1,9 @@
 package com.example.huetune;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
@@ -31,6 +33,8 @@ import com.mapbox.mapboxsdk.plugins.places.autocomplete.model.PlaceOptions;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import android.os.Environment;
@@ -72,6 +76,9 @@ public class MainActivity extends AppCompatActivity {
     private int PICK_IMAGE_REQUEST;
     private int TAKE_IMAGE_REQUEST;
     private int AUTOCOMPLETE_REQUEST_CODE;
+    private int PERM_REQUEST_INTERNET = 4;
+    private int PERM_REQUEST_WREXT = 5;
+    private int PERM_REQUEST_GPS = 6;
     private PicDBHandler handler;
     private MyAdapter adapter;
     private Cursor myCursor;
@@ -91,7 +98,6 @@ public class MainActivity extends AppCompatActivity {
     //TODO use lower resolution in listview
     //TODO use async queries
     //TODO make update queries aynctask
-    //TODO ask for user permissions
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,6 +147,19 @@ public class MainActivity extends AppCompatActivity {
         btnadd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //PERMISSIONS FOR PHOTOS
+                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    // Permission is not granted
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            PERM_REQUEST_WREXT);
+                }
+                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    // Permission is not granted
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                            PERM_REQUEST_WREXT);
+                }
                 if(clickadd) {
                     llc.setVisibility(View.INVISIBLE);
                     llg.setVisibility(View.INVISIBLE);
@@ -162,6 +181,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //PERMISSIONS
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
+            // Permission is not granted
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.INTERNET},
+                    PERM_REQUEST_INTERNET);
+        }
 
         //DATABASE
         handler = new PicDBHandler(this);
@@ -285,6 +311,12 @@ public class MainActivity extends AppCompatActivity {
 
         int id = item.getItemId();
         if(id == R.id.cm_id_curr) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // Permission is not granted
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        PERM_REQUEST_GPS);
+            }
             tmpcursor = adapter.getCursor();
             tmpcursor.moveToPosition(itemPosition); //si sposta all'indice
             fusedLocationClient.getLastLocation()
@@ -418,7 +450,7 @@ public class MainActivity extends AppCompatActivity {
         // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ITALY).format(new Date());
         String imageFileName = "HUETUNE_" + timeStamp + "_";
-        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);  //restituisce la directory sulla sd che quando disinstalli elimina tutto
         File image = File.createTempFile(
                 imageFileName,  /* prefix */
                 ".jpg",         /* suffix */
@@ -488,7 +520,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             protected Map<String, String> getParams()
             {
-                Map<String, String>  params = new HashMap<String, String>();
+                Map<String, String>  params = new HashMap<>();
                 params.put("grant_type", "client_credentials");
                 return params;
             }
@@ -557,5 +589,34 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         requestQueue.add(jsonreq);
+    }
+
+    //PERMISSION RESULT
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == PERM_REQUEST_GPS) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // permission was granted, yay! Do the
+                // contacts-related task you need to do.
+            } else {
+                //DISABILITA GEOLOCALIZZAZIONE
+            }
+        }
+        if (requestCode == PERM_REQUEST_WREXT) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // permission was granted, yay! Do the
+                // contacts-related task you need to do.
+            } else {
+                //DISABILITA SCATTARE FOTO
+            }
+        }
+        if (requestCode == PERM_REQUEST_INTERNET) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // permission was granted, yay! Do the
+                // contacts-related task you need to do.
+            } else {
+                //DISABILITA USO INTERNET
+            }
+        }
     }
 }
