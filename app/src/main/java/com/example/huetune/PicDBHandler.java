@@ -2,19 +2,16 @@ package com.example.huetune;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 public class PicDBHandler extends SQLiteOpenHelper {
 
-    private class myPic{
+    /*private class myPic{
         String pic;
         String loc;
         String song;
@@ -37,6 +34,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
             return this.song;
         }
     }
+*/
 
     //Database version.
     //Note: Increase the database version every-time you make changes to your table structure.
@@ -106,8 +104,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
         return (int)db.insert(TABLE_PICS, null, values);
     }
 
-    // Getting single student details through ID
-    public myPic getmyPic(int studentID) {
+    /*public myPic getmyPic(int studentID) {
 
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -154,39 +151,26 @@ public class PicDBHandler extends SQLiteOpenHelper {
 
         // return student list
         return picList;
-    }
+    }*/
 
-    public int updatePic(String pic, String newloc) {
+    public void updatePic(String pic, String newloc) {
         SQLiteDatabase db = this.getWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put(KEY_PICS_GPS, newloc);
-
-        // updating student row
-        return db.update(TABLE_PICS,
-                values,
-                KEY_PICS_ID + " = ?",
-                new String[] { String.valueOf(pic)});
-
+        db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_GPS + " = " + "\"" + newloc + "\"" + " WHERE " + KEY_PICS_ID + " = " + "\"" + pic + "\"");
+        db.close();
     }
 
-    public int deletePic(String pic) {
+    public void deletePic(String pic) {
         lastdeletedpic = pic;
         SQLiteDatabase db = this.getWritableDatabase();
         String timeStamp = new SimpleDateFormat("dd/MM/yyyy", Locale.ITALY).format(new Date());
-
-        ContentValues values = new ContentValues();
-        values.put(KEY_PICS_DATE, timeStamp);
-
-        return db.update(TABLE_PICS,
-                values,
-                KEY_PICS_ID + " = ?",
-                new String[] { String.valueOf(pic)});
+        db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + timeStamp + " WHERE " + KEY_PICS_ID + " = " + "\"" + lastdeletedpic + "\"");
+        db.close();
     }
 
     public void resumePic(){
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + "NULL" + " WHERE " + KEY_PICS_ID + " = " + "\"" + lastdeletedpic + "\"");
+        db.close();
     }
 
     public void deleteAllPics() {

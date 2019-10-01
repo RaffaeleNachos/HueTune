@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
     //TODO add AI
     //TODO use lower resolution in listview
     //TODO use async queries
-    //TODO check if there's an alternative to use new cursor with new query everytime
+    //TODO make update queries aynctask
     //TODO ask for user permissions
 
     @Override
@@ -98,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //TOOLBAR
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -109,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 llc.setVisibility(View.INVISIBLE);
                 llg.setVisibility(View.INVISIBLE);
-                //bug noto rotazione shadow https://issuetracker.google.com/issues/132569416 possibile soluzione applicare animazione a singoli elementi textview e fab
+                //bug noto flipped shadow https://issuetracker.google.com/issues/132569416 possibile soluzione applicare animazione a singoli elementi textview e fab
                 llc.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_exp_close));
                 llg.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_exp_close));
                 btncam.setClickable(false);
@@ -195,7 +196,7 @@ public class MainActivity extends AppCompatActivity {
         getSpotifyToken();
     }
 
-    //inflate in toolbar
+    //inflate menu in toolbar
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -205,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    //inflate custom menu fro listview item
+    //inflate custom menu from listview item
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
@@ -218,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.action_bin) {
-            Snackbar sbar = Snackbar.make(findViewById(R.id.myFABLayout), "All Photos Deleted", Snackbar.LENGTH_INDEFINITE);
+            Snackbar sbar = Snackbar.make(findViewById(R.id.myFABLayout), "HueBin", Snackbar.LENGTH_INDEFINITE);
             db = handler.getWritableDatabase();
             Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NOT NULL", null);
             adapter.changeCursor(cursor);
@@ -285,7 +286,7 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
         if(id == R.id.cm_id_curr) {
             tmpcursor = adapter.getCursor();
-            tmpcursor.moveToPosition(itemPosition);
+            tmpcursor.moveToPosition(itemPosition); //si sposta all'indice
             fusedLocationClient.getLastLocation()
                     .addOnSuccessListener(this, new OnSuccessListener<Location>() {
                         @Override
@@ -366,8 +367,8 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         //TAKE FROM GALLERY ANCORA NON FUNZIONANTE ASPETTO INTEGRAZIONE AI
         if (requestCode == PICK_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
-            Uri imageUri = data.getData();
-            if(handler.addPic(imageUri.toString(), "Choose Position", "Song", "Songlink") == -1){
+            Uri imageUri = data.getData(); //data in questa risposta è la uri e un flag sconosciuto boh
+            if (imageUri != null && handler.addPic(imageUri.toString(), "Choose Position", "Song", "Songlink") == -1) {
                 Toast.makeText(this, "Photo already present", Toast.LENGTH_SHORT).show();
             }
             db = handler.getWritableDatabase();
@@ -388,7 +389,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //take image from grallery
+    //take image from gallery
     private void reqImageG(){
         PICK_IMAGE_REQUEST = 1;
         Intent picki = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -467,8 +468,8 @@ public class MainActivity extends AppCompatActivity {
                         new Response.ErrorListener() {
                             @Override
                             public void onErrorResponse(VolleyError error) {
-                                Log.w("errorresp", error.toString());
-                                Toast.makeText(MainActivity.this, "Spotify Token not received, Restart App", Toast.LENGTH_SHORT);
+                                //Log.w("errorresp", error.toString());
+                                Toast.makeText(MainActivity.this, "Spotify Token not received, Restart App", Toast.LENGTH_SHORT).show();
                             }
                         })
         {
@@ -479,7 +480,7 @@ public class MainActivity extends AppCompatActivity {
                 String mydashkey = "24ffb05d1e82431b91638ab90386fc84:710d0f96762c4d4ca6c81d97aec82556"; //trasformo codiceid:keyid di spotify in base 64
                 mydashkey = Base64.encodeToString(mydashkey.getBytes(), Base64.NO_WRAP); //nowrap per evitare \n
                 mydashkey = "Basic " + mydashkey;
-                Log.w("key", mydashkey);
+                //Log.w("key", mydashkey);
                 headers.put("Authorization", mydashkey);
                 return headers;
             }
@@ -524,10 +525,10 @@ public class MainActivity extends AppCompatActivity {
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        Log.w("songname", songname);
+                        /*Log.w("songname", songname);
                         Log.w("artistname", artistname);
                         Log.w("songlink", songlink);
-                        Log.w("jsonresp", response.toString().replaceAll("\\\\", ""));
+                        Log.w("jsonresp", response.toString().replaceAll("\\\\", ""));*/
                         //ADD TO DB
                         Uri imageUri = Uri.fromFile(new File(currentPhotoPath));
                         //get della posizione da fare assolutamente in asynctask
@@ -540,14 +541,14 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.w("errorresp", error.toString());
+                        //Log.w("errorresp", error.toString());
                         //ADD TO DB WITH ERROR
-                        Toast.makeText(MainActivity.this, "Spotify Response Error", Toast.LENGTH_SHORT);
+                        Toast.makeText(MainActivity.this, "Spotify Response Error", Toast.LENGTH_SHORT).show();
                     }
                 })
         {
             @Override
-            public Map getHeaders() throws AuthFailureError {
+            public Map<String,String> getHeaders() throws AuthFailureError {
                 HashMap headers = new HashMap();
                 headers.put("Accept", "application/json");
                 headers.put("Content-Type", "application/json");
