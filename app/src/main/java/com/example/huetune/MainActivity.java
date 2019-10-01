@@ -269,7 +269,6 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         if (id == R.id.action_del) {
-            //TODO send an array with uris and delete them, or restore only them
             Snackbar sbar = Snackbar.make(findViewById(R.id.myFABLayout), "All Photos Deleted", Snackbar.LENGTH_LONG);
             sbar.setAction("UNDO", new View.OnClickListener() {
                 @Override

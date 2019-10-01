@@ -2,10 +2,12 @@ package com.example.huetune;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
@@ -38,7 +40,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
 
     //Database version.
     //Note: Increase the database version every-time you make changes to your table structure.
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 1;
 
     //Database Name
     private static final String DATABASE_NAME = "huepics";
@@ -55,6 +57,8 @@ public class PicDBHandler extends SQLiteOpenHelper {
 
     //last deleted pic and pics
     private String lastdeletedpic = null;
+    private ArrayList<String> lastdeletedpics = new ArrayList<>();
+    private Cursor tmpcursor = null;
 
 
     //Here context passed will be of application and not activity.
@@ -175,14 +179,23 @@ public class PicDBHandler extends SQLiteOpenHelper {
 
     public void deleteAllPics() {
         SQLiteDatabase db = this.getWritableDatabase();
+        lastdeletedpics.clear();
+        tmpcursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+        while(tmpcursor.moveToNext()) {
+            lastdeletedpics.add(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")));
+        }
         String timeStamp = new SimpleDateFormat("dd/MM/yyyy", Locale.ITALY).format(new Date());
         db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + timeStamp);
         db.close();
+        tmpcursor.close();
     }
 
     public void resumeAllPics() {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + "NULL");
+        for(int i = 0; i < lastdeletedpics.size(); i++) {
+            db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + "NULL" + " WHERE " + KEY_PICS_ID + " = " + "\"" + lastdeletedpics.get(i) + "\"");
+        }
         db.close();
+
     }
 }
