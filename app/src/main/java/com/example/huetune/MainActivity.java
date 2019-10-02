@@ -95,9 +95,8 @@ public class MainActivity extends AppCompatActivity {
     private FusedLocationProviderClient fusedLocationClient;
 
     //TODO add AI
-    //TODO use lower resolution in listview
-    //TODO use async queries
     //TODO make update queries aynctask
+    //TODO make splashscreen
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -213,7 +212,9 @@ public class MainActivity extends AppCompatActivity {
 
         //POSITION AND GPS WITH PLAY SERVICES BATTERY SAVEEEEEEE
         geocoder = new Geocoder(this, Locale.getDefault());
-        //TODO testare se geocoder è presente nel paese
+        if (geocoder.isPresent()==false){
+            Toast.makeText(this, "Impossible to know location from taken photos", Toast.LENGTH_SHORT).show();
+        }
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
 

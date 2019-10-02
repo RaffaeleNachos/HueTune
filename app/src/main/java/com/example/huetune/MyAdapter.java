@@ -2,13 +2,14 @@ package com.example.huetune;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
 
 public class MyAdapter extends CursorAdapter {
 
@@ -34,9 +35,9 @@ public class MyAdapter extends CursorAdapter {
         String loc = cursor.getString(cursor.getColumnIndexOrThrow("location"));
         String tune = cursor.getString(cursor.getColumnIndexOrThrow("song"));
         // Populate fields with extracted properties
-        myImg.setImageURI(Uri.parse(img));
+        //myImg.setImageBitmap(thumbBitmap); SUPER SLOW! Should do it with async
+        Picasso.get().load(img).into(myImg); //picasso library uses asyncTask and caching, fast and super simple, let's use it :)
         myLoc.setText(String.valueOf(loc));
         mySong.setText(String.valueOf(tune));
     }
-
 }

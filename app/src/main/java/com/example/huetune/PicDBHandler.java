@@ -40,7 +40,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
 
     //Database version.
     //Note: Increase the database version every-time you make changes to your table structure.
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 4;
 
     //Database Name
     private static final String DATABASE_NAME = "huepics";
