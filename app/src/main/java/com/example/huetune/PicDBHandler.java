@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -177,6 +178,12 @@ public class PicDBHandler extends SQLiteOpenHelper {
         db.close();
     }
 
+    public void resumePicFromBin(String key){
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + "NULL" + " WHERE " + KEY_PICS_ID + " = " + "\"" + key + "\"");
+        db.close();
+    }
+
     public void deleteAllPics() {
         SQLiteDatabase db = this.getWritableDatabase();
         lastdeletedpics.clear();
@@ -184,7 +191,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
         while(tmpcursor.moveToNext()) {
             lastdeletedpics.add(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")));
         }
-        String timeStamp = new SimpleDateFormat("dd/MM/yyyy", Locale.ITALY).format(new Date());
+        String timeStamp = new SimpleDateFormat("yyyy/MM/dd", Locale.ITALY).format(new Date());
         db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + timeStamp);
         db.close();
         tmpcursor.close();
@@ -197,5 +204,18 @@ public class PicDBHandler extends SQLiteOpenHelper {
         }
         db.close();
 
+    }
+
+    public void resumeAllPicsFromBin() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + "NULL" + " WHERE " + KEY_PICS_DATE + " IS NOT NULL");
+        db.close();
+
+    }
+
+    public void deleteOLDPics(){
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("DELETE FROM " + TABLE_PICS + " WHERE " + KEY_PICS_DATE + " <= date('now','-30 day')");
+        db.close();
     }
 }

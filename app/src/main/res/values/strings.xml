@@ -9,4 +9,6 @@
     <string name="cm_btshare">Bluetooth Share</string>
     <string name="cm_delete">Delete Photo</string>
     <string name="cm_curr">Use Current Location</string>
+    <string name="bin_restoreall">Restore all Pics</string>
+    <string name="bin_restore">Restore Pic</string>
 </resources>

@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
     private int PERM_REQUEST_INTERNET = 4;
     private int PERM_REQUEST_WREXT = 5;
     private int PERM_REQUEST_GPS = 6;
-    private PicDBHandler handler;
+    public PicDBHandler handler;
     private MyAdapter adapter;
     private Cursor myCursor;
     private SQLiteDatabase db;
@@ -96,7 +96,10 @@ public class MainActivity extends AppCompatActivity {
 
     //TODO add AI
     //TODO make update queries aynctask
-    //TODO make splashscreen
+    //TODO update on return from HueBinActivity
+    //best practice per il cestino
+    //thread ui per aggiornamento ui ma caricamento in async task
+    //cercare file tramite uri conviene quasi creare un nuovo file tramite la uri ma sono certo di perdere i metadati
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -190,6 +193,7 @@ public class MainActivity extends AppCompatActivity {
 
         //DATABASE
         handler = new PicDBHandler(this);
+        handler.deleteOLDPics(); //cancella le foto nel cestino più vecchie di 30 giorni
 
         db = handler.getWritableDatabase();
         myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
@@ -246,12 +250,8 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.action_bin) {
-            Snackbar sbar = Snackbar.make(findViewById(R.id.myFABLayout), "HueBin", Snackbar.LENGTH_INDEFINITE);
-            db = handler.getWritableDatabase();
-            Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NOT NULL", null);
-            adapter.changeCursor(cursor);
-            sbar.show();
-            return true;
+            Intent intent = new Intent(this, HueBinActivity.class);
+            startActivity(intent);
         }
         if (id == R.id.action_search) {
             searchvw.setOnQueryTextListener(new SearchView.OnQueryTextListener() {

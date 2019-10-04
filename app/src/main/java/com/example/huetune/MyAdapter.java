@@ -35,8 +35,8 @@ public class MyAdapter extends CursorAdapter {
         String loc = cursor.getString(cursor.getColumnIndexOrThrow("location"));
         String tune = cursor.getString(cursor.getColumnIndexOrThrow("song"));
         // Populate fields with extracted properties
-        //myImg.setImageBitmap(thumbBitmap); SUPER SLOW! Should do it with async
-        Picasso.get().load(img).into(myImg); //picasso library uses asyncTask and caching, fast and super simple, let's use it :)
+        //myImg.setImageURI(Uri.parse(img)); //SUPER SLOW! Should do it with async
+        Picasso.get().load(img).centerCrop().resize(220,220).priority(Picasso.Priority.HIGH).into(myImg); //picasso library uses asyncTask and caching, fast and super simple, let's use it :)
         myLoc.setText(String.valueOf(loc));
         mySong.setText(String.valueOf(tune));
     }
