@@ -10,6 +10,9 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
     }
     buildTypes {
         release {
@@ -35,4 +38,5 @@ dependencies {
     implementation 'com.android.volley:volley:1.1.0'
     implementation 'com.google.android.gms:play-services-location:17.0.0'
     implementation 'com.squareup.picasso:picasso:2.71828'
+    implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
 }

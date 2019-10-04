@@ -36,6 +36,7 @@ public class MyAdapter extends CursorAdapter {
         String tune = cursor.getString(cursor.getColumnIndexOrThrow("song"));
         // Populate fields with extracted properties
         //myImg.setImageURI(Uri.parse(img)); //SUPER SLOW! Should do it with async
+        //source https://github.com/square/picasso/tree/master/picasso/src/main/java/com/squareup/picasso3
         Picasso.get().load(img).centerCrop().resize(220,220).priority(Picasso.Priority.HIGH).into(myImg); //picasso library uses asyncTask and caching, fast and super simple, let's use it :)
         myLoc.setText(String.valueOf(loc));
         mySong.setText(String.valueOf(tune));

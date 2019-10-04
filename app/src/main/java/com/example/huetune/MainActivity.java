@@ -96,10 +96,14 @@ public class MainActivity extends AppCompatActivity {
 
     //TODO add AI
     //TODO make update queries aynctask
-    //TODO update on return from HueBinActivity
-    //best practice per il cestino
-    //thread ui per aggiornamento ui ma caricamento in async task
-    //cercare file tramite uri conviene quasi creare un nuovo file tramite la uri ma sono certo di perdere i metadati
+
+    @Override
+    protected void onResume(){ //utile per quando ritorna da HueBin
+        super.onResume();
+        db = handler.getWritableDatabase();
+        Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+        adapter.changeCursor(cursor);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -193,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
 
         //DATABASE
         handler = new PicDBHandler(this);
-        handler.deleteOLDPics(); //cancella le foto nel cestino più vecchie di 30 giorni
+        //BUG handler.deleteOLDPics(); //cancella le foto nel cestino più vecchie di 30 giorni
 
         db = handler.getWritableDatabase();
         myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
