@@ -4,13 +4,17 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.media.ExifInterface;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -39,6 +43,7 @@ import androidx.core.content.FileProvider;
 
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.text.SpannableStringBuilder;
 import android.util.Base64;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -57,9 +62,16 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.tensorflow.lite.Interpreter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -534,8 +546,17 @@ public class MainActivity extends AppCompatActivity {
 
     //search call web api spotify
     private void mySpotifyGET(){
-        final String mypos = getMyPosition(currentPhotoPath);
-        String requrl = "https://api.spotify.com/v1/search?q=" + mypos + "&type=track&market=IT&limit=1&offset=0";
+        //TFLITE TRY
+        List<Classifier.Recognition> output = null;
+        try {
+            Bitmap myBitmap = BitmapFactory.decodeFile(currentPhotoPath);
+            myBitmap = Bitmap.createScaledBitmap(myBitmap, 224, 224, false);
+            ClassifierQuantizedMobileNet myImgClass = new ClassifierQuantizedMobileNet(MainActivity.this, Classifier.Device.CPU, 1);
+            output = myImgClass.recognizeImage(myBitmap);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String requrl = "https://api.spotify.com/v1/search?q=" + output.get(0).getTitle() + "&type=track&market=IT&limit=1&offset=0";
         JsonObjectRequest jsonreq = new JsonObjectRequest
                 (Request.Method.GET, requrl, null, new Response.Listener<JSONObject>() {
 
@@ -561,14 +582,13 @@ public class MainActivity extends AppCompatActivity {
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        /*Log.w("songname", songname);
+                        Log.w("songname", songname);
                         Log.w("artistname", artistname);
                         Log.w("songlink", songlink);
-                        Log.w("jsonresp", response.toString().replaceAll("\\\\", ""));*/
+                        Log.w("jsonresp", response.toString().replaceAll("\\\\", ""));
                         //ADD TO DB
                         Uri imageUri = Uri.fromFile(new File(currentPhotoPath));
-                        //get della posizione da fare assolutamente in asynctask
-                        handler.addPic(imageUri.toString(), mypos, songname + " - " + artistname, songlink);
+                        handler.addPic(imageUri.toString(), getMyPosition(currentPhotoPath), songname + " - " + artistname, songlink);
                         db = handler.getWritableDatabase();
                         Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
                         adapter.changeCursor(cursor);
