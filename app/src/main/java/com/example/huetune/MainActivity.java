@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -14,7 +13,6 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.media.ExifInterface;
-import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -43,7 +41,6 @@ import androidx.core.content.FileProvider;
 
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.text.SpannableStringBuilder;
 import android.util.Base64;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -62,16 +59,8 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.tensorflow.lite.Interpreter;
-
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -106,11 +95,10 @@ public class MainActivity extends AppCompatActivity {
     private Integer itemPosition;
     private FusedLocationProviderClient fusedLocationClient;
 
-    //TODO add AI
     //TODO make update queries aynctask
 
     @Override
-    protected void onResume(){ //utile per quando ritorna da HueBin
+    protected void onResume(){ //per quando ritorna da HueBin
         super.onResume();
         db = handler.getWritableDatabase();
         Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
@@ -551,7 +539,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             Bitmap myBitmap = BitmapFactory.decodeFile(currentPhotoPath);
             myBitmap = Bitmap.createScaledBitmap(myBitmap, 224, 224, false);
-            ClassifierQuantizedMobileNet myImgClass = new ClassifierQuantizedMobileNet(MainActivity.this, Classifier.Device.CPU, 1);
+            ClassifierQuantizedMobileNet myImgClass = new ClassifierQuantizedMobileNet(MainActivity.this, 1);
             output = myImgClass.recognizeImage(myBitmap);
         } catch (IOException e) {
             e.printStackTrace();
