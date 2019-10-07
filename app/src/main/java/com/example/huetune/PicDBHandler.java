@@ -215,7 +215,9 @@ public class PicDBHandler extends SQLiteOpenHelper {
 
     public void deleteOLDPics(){
         SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL("DELETE FROM " + TABLE_PICS + " WHERE " + KEY_PICS_DATE + " <= date('now','-30 day')");
+        db.execSQL("DELETE FROM " + TABLE_PICS + " WHERE " + KEY_PICS_DATE + " >= date('now','-30 day')");
+        //salvando la data come anno/mese/giorno è possibile eseguire una comparazione tra stringhe
+        //dato che SQLLite non accetta DATE coem tipo ma solo TEXT
         db.close();
     }
 }

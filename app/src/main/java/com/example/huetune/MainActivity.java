@@ -197,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
 
         //DATABASE
         handler = new PicDBHandler(this);
-        //BUG handler.deleteOLDPics(); //cancella le foto nel cestino più vecchie di 30 giorni
+        handler.deleteOLDPics(); //cancella le foto nel cestino più vecchie di 30 giorni
 
         db = handler.getWritableDatabase();
         myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
