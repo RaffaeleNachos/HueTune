@@ -13,10 +13,6 @@
         android:title="@string/cm_play"
         />
     <item
-        android:id="@+id/cm_id_btshare"
-        android:title="@string/cm_btshare"
-        />
-    <item
         android:id="@+id/cm_id_delete"
         android:title="@string/cm_delete"
         />

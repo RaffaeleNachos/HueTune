@@ -2,6 +2,7 @@ package com.example.huetune;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,7 +10,7 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
+import com.bumptech.glide.Glide;
 
 public class MyAdapter extends CursorAdapter {
 
@@ -24,20 +25,19 @@ public class MyAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, final Context context, Cursor cursor) {
-        // Find fields to populate in inflated template
+        //Find fields to populate in inflated template
         ImageView myImg = view.findViewById(R.id.photoView);
         TextView myLoc = view.findViewById(R.id.locationView);
         myLoc.setSelected(true);
         TextView mySong = view.findViewById(R.id.songView);
         mySong.setSelected(true);
-        // Extract properties from cursor
+        //Extract properties from cursor
         String img = cursor.getString(cursor.getColumnIndexOrThrow("picuri"));
         String loc = cursor.getString(cursor.getColumnIndexOrThrow("location"));
         String tune = cursor.getString(cursor.getColumnIndexOrThrow("song"));
-        // Populate fields with extracted properties
+        //Populate fields with extracted properties
         //myImg.setImageURI(Uri.parse(img)); //SUPER SLOW! Should do it with async
-        //source https://github.com/square/picasso/tree/master/picasso/src/main/java/com/squareup/picasso3
-        Picasso.get().load(img).centerCrop().resize(220,220).priority(Picasso.Priority.HIGH).into(myImg); //picasso library uses asyncTask and caching, fast and super simple, let's use it :)
+        Glide.with(view).load(img).centerCrop().into(myImg); //library that uses asyncTask and caching, fast and super simple, let's use it :)
         myLoc.setText(String.valueOf(loc));
         mySong.setText(String.valueOf(tune));
     }

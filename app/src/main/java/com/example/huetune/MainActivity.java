@@ -61,6 +61,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -72,7 +73,8 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 
     private Boolean clickadd = false;
-    private FloatingActionButton btncam, btngal, btnadd;
+    private FloatingActionButton btncam;
+    private FloatingActionButton btngal;
     private LinearLayout llc, llg;
     private int PICK_IMAGE_REQUEST;
     private int TAKE_IMAGE_REQUEST;
@@ -85,24 +87,26 @@ public class MainActivity extends AppCompatActivity {
     private Cursor myCursor;
     private SQLiteDatabase db;
     private String currentPhotoPath;
+    private String currentPhotoUri;
     private SearchView searchvw;
     private Geocoder geocoder;
     private List<Address> addresses;
     private RequestQueue requestQueue;
     private String sessionToken = null;
-    private ListView lview;
     private Cursor tmpcursor;
     private Integer itemPosition;
     private FusedLocationProviderClient fusedLocationClient;
 
     //TODO make update queries aynctask
+    //TODO add GPS and remove Bluetooth
+    //TODO fix permissions results
 
     @Override
     protected void onResume(){ //per quando ritorna da HueBin
         super.onResume();
         db = handler.getWritableDatabase();
-        Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
-        adapter.changeCursor(cursor);
+        myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+        adapter.changeCursor(myCursor);
     }
 
     @Override
@@ -149,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        btnadd = findViewById(R.id.add);
+        FloatingActionButton btnadd = findViewById(R.id.add);
         btnadd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -187,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //PERMISSIONS
+        //PERMISSIONS FOR SPOTIFY URL INTENT
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
             // Permission is not granted
             ActivityCompat.requestPermissions(this,
@@ -200,13 +204,15 @@ public class MainActivity extends AppCompatActivity {
         handler.deleteOLDPics(); //cancella le foto nel cestino più vecchie di 30 giorni
 
         db = handler.getWritableDatabase();
+        //si usa rawQuery perchè restituisce un cursor
         myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
 
-        lview = findViewById(R.id.listview);
+        //LISTVIEW PRINCIPALE
+        ListView lview = findViewById(R.id.listview);
         adapter = new MyAdapter(this, myCursor);
         lview.setAdapter(adapter);
 
-        //attivo menu contestuale floating
+        //associo menu contestuale alla view
         registerForContextMenu(lview);
 
         //FILTER QUERY FOR SEARCH
@@ -220,18 +226,19 @@ public class MainActivity extends AppCompatActivity {
 
         //POSITION AND GPS WITH PLAY SERVICES BATTERY SAVEEEEEEE
         geocoder = new Geocoder(this, Locale.getDefault());
-        if (geocoder.isPresent()==false){
+        if (!geocoder.isPresent()){
             Toast.makeText(this, "Impossible to know location from taken photos", Toast.LENGTH_SHORT).show();
         }
+        //TODO FIX GPS
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
 
         //REST CALL TO SPOTIFY
         requestQueue = Volley.newRequestQueue(this);
-        getSpotifyToken();
+        getSpotifyToken(); //gives me a new token for spotify requests
     }
 
-    //inflate menu in toolbar
+    //inflate menu in toolbar viene chiamato alla creazione dell'activity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -241,14 +248,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    //inflate custom menu from listview item
-    @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        super.onCreateContextMenu(menu, v, menuInfo);
-        getMenuInflater().inflate(R.menu.cm_actions , menu);
-    }
-
-    //select toolbar menu
+    //select toolbar menu il metodo deve restituire true se ha consumato l'evento, false altrimenti
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -256,6 +256,7 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.action_bin) {
             Intent intent = new Intent(this, HueBinActivity.class);
             startActivity(intent);
+            return true;
         }
         if (id == R.id.action_search) {
             searchvw.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -280,8 +281,8 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     handler.resumeAllPics();
                     db = handler.getWritableDatabase();
-                    Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
-                    adapter.changeCursor(cursor);
+                    myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+                    adapter.changeCursor(myCursor);
                 }
             });
             LinearLayout llc = findViewById(R.id.llc);
@@ -297,13 +298,19 @@ public class MainActivity extends AppCompatActivity {
             clickadd=false;
             handler.deleteAllPics();
             db = handler.getWritableDatabase();
-            Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
-            adapter.changeCursor(cursor);
+            myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+            adapter.changeCursor(myCursor);
             sbar.show();
             return true;
         }
-
         return super.onOptionsItemSelected(item);
+    }
+
+    //inflate menu contestuale from listview item, equivalente del tasto destro
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        getMenuInflater().inflate(R.menu.cm_actions , menu);
     }
 
     //long press on item in listview
@@ -315,6 +322,7 @@ public class MainActivity extends AppCompatActivity {
 
         int id = item.getItemId();
         if(id == R.id.cm_id_curr) {
+            //TODO FIX THIS
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 // Permission is not granted
                 ActivityCompat.requestPermissions(this,
@@ -331,8 +339,8 @@ public class MainActivity extends AppCompatActivity {
                             if (location != null) {
                                 handler.updatePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")),location.toString());
                                 db = handler.getWritableDatabase();
-                                Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
-                                adapter.changeCursor(cursor);
+                                myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+                                adapter.changeCursor(myCursor);
                             }
                         }
                     });
@@ -357,12 +365,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(browserIntent);
             return true;
         }
-        if(id == R.id.cm_id_btshare) {
-            tmpcursor = adapter.getCursor();
-            tmpcursor.moveToPosition(itemPosition);
-            Toast.makeText(this, "btshare", Toast.LENGTH_SHORT).show();
-            return true;
-        }
         if(id == R.id.cm_id_delete) {
             tmpcursor = adapter.getCursor();
             tmpcursor.moveToPosition(itemPosition);
@@ -372,8 +374,8 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     handler.resumePic();
                     db = handler.getWritableDatabase();
-                    Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
-                    adapter.changeCursor(cursor);
+                    myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+                    adapter.changeCursor(myCursor);
                 }
             });
             LinearLayout llc = findViewById(R.id.llc);
@@ -389,8 +391,8 @@ public class MainActivity extends AppCompatActivity {
             clickadd=false;
             handler.deletePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")));
             db = handler.getWritableDatabase();
-            Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
-            adapter.changeCursor(cursor);
+            myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+            adapter.changeCursor(myCursor);
             sbar.show();
             return true;
         }
@@ -400,19 +402,12 @@ public class MainActivity extends AppCompatActivity {
     //on activity intent result
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        //TAKE FROM GALLERY ANCORA NON FUNZIONANTE ASPETTO INTEGRAZIONE AI
         if (requestCode == PICK_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
             Uri imageUri = data.getData(); //data in questa risposta è la uri e un flag sconosciuto boh
-            if (imageUri != null && handler.addPic(imageUri.toString(), "Choose Position", "Song", "Songlink") == -1) {
-                Toast.makeText(this, "Photo already present", Toast.LENGTH_SHORT).show();
-            }
-            db = handler.getWritableDatabase();
-            Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
-            adapter.changeCursor(cursor);
+            mySpotifyGET(imageUri.toString(), null);
         }
         if (requestCode == TAKE_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
-            mySpotifyGET();
+            mySpotifyGET(currentPhotoUri, currentPhotoPath);
         }
         if (requestCode == AUTOCOMPLETE_REQUEST_CODE && resultCode==Activity.RESULT_OK) {
             tmpcursor = adapter.getCursor();
@@ -420,9 +415,10 @@ public class MainActivity extends AppCompatActivity {
             CarmenFeature feature = PlaceAutocomplete.getPlace(data);
             handler.updatePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")), feature.placeName());
             db = handler.getWritableDatabase();
-            Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
-            adapter.changeCursor(cursor);
+            myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+            adapter.changeCursor(myCursor);
         }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     //take image from gallery
@@ -440,10 +436,11 @@ public class MainActivity extends AppCompatActivity {
         try{
             takenpic=createImageFile();
         } catch (IOException e) {
-            Log.println(Log.ERROR, "IOException", "Error creating picture file");
+            Log.e("IOException", "Error creating picture file");
         }
         if(takenpic!=null){
             Uri photoURI = FileProvider.getUriForFile(this, "com.example.android.provider", takenpic);
+            currentPhotoUri = photoURI.toString();
             takei.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
             startActivityForResult(takei, TAKE_IMAGE_REQUEST);
         }
@@ -466,21 +463,26 @@ public class MainActivity extends AppCompatActivity {
 
     //position taken from exif data
     private String getMyPosition(String inputfile) {
-        ExifInterface myexif = null;
-        try {
-            myexif = new ExifInterface(inputfile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        float[] latlong = new float[2];
-        boolean hasLatLong = myexif.getLatLong(latlong);
-        if (hasLatLong) {
+        if(inputfile!=null) {
+            ExifInterface myexif = null;
             try {
-                addresses = geocoder.getFromLocation(latlong[0], latlong[1], 1);
+                myexif = new ExifInterface(inputfile);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return addresses.get(0).getLocality() + ", " + addresses.get(0).getAdminArea();
+            float[] latlong = new float[2];
+            boolean hasLatLong = false;
+            if (myexif != null) {
+                hasLatLong = myexif.getLatLong(latlong);
+            }
+            if (hasLatLong) {
+                try {
+                    addresses = geocoder.getFromLocation(latlong[0], latlong[1], 1);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return addresses.get(0).getLocality() + ", " + addresses.get(0).getAdminArea();
+            }
         }
         return "Choose Position";
     }
@@ -533,11 +535,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //search call web api spotify
-    private void mySpotifyGET(){
+    private void mySpotifyGET(final String tmpUri, final String tmpPath){
         //TFLITE TRY
         List<Classifier.Recognition> output = null;
         try {
-            Bitmap myBitmap = BitmapFactory.decodeFile(currentPhotoPath);
+            InputStream image_stream = getContentResolver().openInputStream(Uri.parse(tmpUri));
+            Bitmap myBitmap = BitmapFactory.decodeStream(image_stream);
             myBitmap = Bitmap.createScaledBitmap(myBitmap, 224, 224, false);
             ClassifierQuantizedMobileNet myImgClass = new ClassifierQuantizedMobileNet(MainActivity.this, 1);
             output = myImgClass.recognizeImage(myBitmap);
@@ -575,11 +578,12 @@ public class MainActivity extends AppCompatActivity {
                         Log.w("songlink", songlink);
                         Log.w("jsonresp", response.toString().replaceAll("\\\\", ""));
                         //ADD TO DB
-                        Uri imageUri = Uri.fromFile(new File(currentPhotoPath));
-                        handler.addPic(imageUri.toString(), getMyPosition(currentPhotoPath), songname + " - " + artistname, songlink);
+                        if (handler.addPic(tmpUri, getMyPosition(tmpPath), songname + " - " + artistname, songlink) == -1) {
+                            Toast.makeText(MainActivity.this, "Photo already present", Toast.LENGTH_SHORT).show();
+                        }
                         db = handler.getWritableDatabase();
-                        Cursor cursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
-                        adapter.changeCursor(cursor);
+                        myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+                        adapter.changeCursor(myCursor);
                     }
                 }, new Response.ErrorListener() {
 
