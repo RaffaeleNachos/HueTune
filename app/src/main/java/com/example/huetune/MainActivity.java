@@ -98,7 +98,6 @@ public class MainActivity extends AppCompatActivity {
     private FusedLocationProviderClient fusedLocationClient;
 
     //TODO make update queries aynctask
-    //TODO add GPS and remove Bluetooth
     //TODO fix permissions results
 
     @Override
@@ -224,12 +223,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //POSITION AND GPS WITH PLAY SERVICES BATTERY SAVEEEEEEE
+        //POSITION from exif with Geocoder AND GPS with Google Play Services -> BATTERY SAVE
         geocoder = new Geocoder(this, Locale.getDefault());
         if (!geocoder.isPresent()){
             Toast.makeText(this, "Impossible to know location from taken photos", Toast.LENGTH_SHORT).show();
         }
-        //TODO FIX GPS
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
 
@@ -322,22 +320,33 @@ public class MainActivity extends AppCompatActivity {
 
         int id = item.getItemId();
         if(id == R.id.cm_id_curr) {
-            //TODO FIX THIS
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 // Permission is not granted
                 ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
                         PERM_REQUEST_GPS);
             }
             tmpcursor = adapter.getCursor();
             tmpcursor.moveToPosition(itemPosition); //si sposta all'indice
+            //from https://developer.android.com/training/location/retrieve-current.html
             fusedLocationClient.getLastLocation()
                     .addOnSuccessListener(this, new OnSuccessListener<Location>() {
                         @Override
                         public void onSuccess(Location location) {
                             // Got last known location. In some rare situations this can be null.
-                            if (location != null) {
-                                handler.updatePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")),location.toString());
+                            if (location != null){
+                                try {
+                                    addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                if (addresses != null) {
+                                    String position = addresses.get(0).getLocality() + ", " + addresses.get(0).getAdminArea();
+                                    handler.updatePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")), position);
+                                }
+                                else {
+                                    handler.updatePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")), "Location not found");
+                                }
                                 db = handler.getWritableDatabase();
                                 myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
                                 adapter.changeCursor(myCursor);
