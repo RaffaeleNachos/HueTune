@@ -418,10 +418,26 @@ public class MainActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PICK_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
             Uri imageUri = data.getData(); //data in questa risposta è la uri e un flag sconosciuto boh
-            mySpotifyGET(imageUri.toString(), null);
+            if (handler.addPic(imageUri.toString(), getPositionFromFile(null), "Finding the song...", "www.spotify.com") == -1) {
+                Toast.makeText(MainActivity.this, "Photo already present", Toast.LENGTH_SHORT).show();
+            } else {
+                db = handler.getWritableDatabase();
+                myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+                adapter.changeCursor(myCursor);
+                new GetSpotifySongWithAI(MainActivity.this, handler, adapter, sessionToken, MainActivity.this).execute(imageUri.toString());
+            }
+            //mySpotifyGET(imageUri.toString(), null);
         }
         if (requestCode == TAKE_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
-            mySpotifyGET(currentPhotoUri, currentPhotoPath);
+            if (handler.addPic(currentPhotoUri, getPositionFromFile(currentPhotoPath), "Finding the song...", "www.spotify.com") == -1) {
+                Toast.makeText(MainActivity.this, "Photo already present", Toast.LENGTH_SHORT).show();
+            } else {
+                db = handler.getWritableDatabase();
+                myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+                adapter.changeCursor(myCursor);
+                new GetSpotifySongWithAI(MainActivity.this, handler, adapter, sessionToken, MainActivity.this).execute(currentPhotoUri);
+            }
+            //mySpotifyGET(currentPhotoUri, currentPhotoPath);
         }
         if (requestCode == AUTOCOMPLETE_REQUEST_CODE && resultCode==Activity.RESULT_OK) {
             tmpcursor = adapter.getCursor();
@@ -547,80 +563,6 @@ public class MainActivity extends AppCompatActivity {
         };
         requestQueue.add(jsonreq);
     }
-
-    //search call web api spotify
-    private void mySpotifyGET(final String tmpUri, final String tmpPath){
-        //TFLITE TRY
-        List<Classifier.Recognition> output = null;
-        try {
-            InputStream image_stream = getContentResolver().openInputStream(Uri.parse(tmpUri));
-            Bitmap myBitmap = BitmapFactory.decodeStream(image_stream);
-            myBitmap = Bitmap.createScaledBitmap(myBitmap, 224, 224, false);
-            ClassifierQuantizedMobileNet myImgClass = new ClassifierQuantizedMobileNet(MainActivity.this, 1);
-            output = myImgClass.recognizeImage(myBitmap);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String requrl = "https://api.spotify.com/v1/search?q=" + output.get(0).getTitle() + "&type=track&market=IT&limit=1&offset=0";
-        JsonObjectRequest jsonreq = new JsonObjectRequest
-                (Request.Method.GET, requrl, null, new Response.Listener<JSONObject>() {
-
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        JSONObject tracks = null;
-                        JSONArray items = null;
-                        JSONObject urls = null;
-                        String songlink = null;
-                        String songname = null;
-                        JSONArray artists = null;
-                        JSONObject artist = null;
-                        String artistname = null;
-                        try {
-                            tracks = response.getJSONObject("tracks");
-                            items = tracks.getJSONArray("items");
-                            urls = (JSONObject) items.get(0);
-                            songname = urls.getString("name");
-                            songlink = urls.getJSONObject("external_urls").getString("spotify");
-                            artists = urls.getJSONArray("artists");
-                            artist = (JSONObject) artists.get(0);
-                            artistname = artist.getString("name");
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        Log.w("songname", songname);
-                        Log.w("artistname", artistname);
-                        Log.w("songlink", songlink);
-                        Log.w("jsonresp", response.toString().replaceAll("\\\\", ""));
-                        //ADD TO DB
-                        if (handler.addPic(tmpUri, getPositionFromFile(tmpPath), songname + " - " + artistname, songlink) == -1) {
-                            Toast.makeText(MainActivity.this, "Photo already present", Toast.LENGTH_SHORT).show();
-                        }
-                        db = handler.getWritableDatabase();
-                        myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
-                        adapter.changeCursor(myCursor);
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        //Log.w("errorresp", error.toString());
-                        //ADD TO DB WITH ERROR
-                        Toast.makeText(MainActivity.this, "Spotify Response Error", Toast.LENGTH_SHORT).show();
-                    }
-                })
-        {
-            @Override
-            public Map<String,String> getHeaders() throws AuthFailureError {
-                HashMap headers = new HashMap();
-                headers.put("Accept", "application/json");
-                headers.put("Content-Type", "application/json");
-                headers.put("Authorization", "Bearer " + sessionToken);
-                return headers;
-            }
-        };
-        requestQueue.add(jsonreq);
-    }
-
 
     //PERMISSION RESULT
     @Override
