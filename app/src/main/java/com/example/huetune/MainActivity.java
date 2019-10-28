@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
     //TODO fix permissions results
     //TODO use geocoder not in Thread UI
     //TODO fix image rotation
-    //TODO spotify calls in async
+    //TODO spotify calls in async one is done
 
     @Override
     protected void onResume(){ //per quando ritorna da HueBin
