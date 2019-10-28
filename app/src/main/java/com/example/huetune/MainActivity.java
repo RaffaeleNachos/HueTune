@@ -12,7 +12,7 @@ import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.media.ExifInterface;
+import androidx.exifinterface.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -91,14 +91,16 @@ public class MainActivity extends AppCompatActivity {
     private SearchView searchvw;
     private Geocoder geocoder;
     private List<Address> addresses;
-    private RequestQueue requestQueue;
     private String sessionToken = null;
     private Cursor tmpcursor;
     private Integer itemPosition;
     private FusedLocationProviderClient fusedLocationClient;
 
-    //TODO make update queries aynctask
+    //TODO make update queries aynctask?
     //TODO fix permissions results
+    //TODO use geocoder not in Thread UI
+    //TODO fix image rotation
+    //TODO spotify calls in async
 
     @Override
     protected void onResume(){ //per quando ritorna da HueBin
@@ -224,16 +226,16 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //POSITION from exif with Geocoder AND GPS with Google Play Services -> BATTERY SAVE
-        geocoder = new Geocoder(this, Locale.getDefault());
-        if (!geocoder.isPresent()){
+        if (Geocoder.isPresent()){
+            geocoder = new Geocoder(this, Locale.getDefault());
+        } else {
             Toast.makeText(this, "Impossible to know location from taken photos", Toast.LENGTH_SHORT).show();
         }
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
 
         //REST CALL TO SPOTIFY
-        requestQueue = Volley.newRequestQueue(this);
-        getSpotifyToken(); //gives me a new token for spotify requests
+        new GetSpotifySessionToken(sessionToken, MainActivity.this).execute(); //gives me a new token for spotify requests
     }
 
     //inflate menu in toolbar viene chiamato alla creazione dell'activity
@@ -328,6 +330,7 @@ public class MainActivity extends AppCompatActivity {
             }
             tmpcursor = adapter.getCursor();
             tmpcursor.moveToPosition(itemPosition); //si sposta all'indice
+            //TODO async
             //from https://developer.android.com/training/location/retrieve-current.html
             fusedLocationClient.getLastLocation()
                     .addOnSuccessListener(this, new OnSuccessListener<Location>() {
@@ -445,7 +448,8 @@ public class MainActivity extends AppCompatActivity {
         try{
             takenpic=createImageFile();
         } catch (IOException e) {
-            Log.e("IOException", "Error creating picture file");
+            e.printStackTrace();
+            //Log.e("IOException", "Error creating picture file");
         }
         if(takenpic!=null){
             Uri photoURI = FileProvider.getUriForFile(this, "com.example.android.provider", takenpic);
@@ -471,7 +475,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //position taken from exif data
-    private String getMyPosition(String inputfile) {
+    private String getPositionFromFile(String inputfile) {
         if(inputfile!=null) {
             ExifInterface myexif = null;
             try {
@@ -479,12 +483,11 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            float[] latlong = new float[2];
-            boolean hasLatLong = false;
+            double[] latlong = null;
             if (myexif != null) {
-                hasLatLong = myexif.getLatLong(latlong);
+                latlong = myexif.getLatLong();
             }
-            if (hasLatLong) {
+            if(latlong!=null) {
                 try {
                     addresses = geocoder.getFromLocation(latlong[0], latlong[1], 1);
                 } catch (IOException e) {
@@ -494,53 +497,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return "Choose Position";
-    }
-
-    //get session token from soptify web api call
-    private void getSpotifyToken(){
-        String rest = "https://accounts.spotify.com/api/token";
-        StringRequest jsonreq = new StringRequest  //uso stringrequest perchè JSONObjreq fa override di getparams() e non chiama il metodo
-                (Request.Method.POST, rest, new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        JSONObject token = null;
-                        try {
-                            token = new JSONObject(response);
-                            sessionToken = token.getString("access_token");
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                },
-                        new Response.ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                //Log.w("errorresp", error.toString());
-                                Toast.makeText(MainActivity.this, "Spotify Token not received, Restart App", Toast.LENGTH_SHORT).show();
-                            }
-                        })
-        {
-            // -H parametes
-            @Override
-            public Map getHeaders() throws AuthFailureError {
-                HashMap headers = new HashMap();
-                String mydashkey = "24ffb05d1e82431b91638ab90386fc84:710d0f96762c4d4ca6c81d97aec82556"; //trasformo codiceid:keyid di spotify in base 64
-                mydashkey = Base64.encodeToString(mydashkey.getBytes(), Base64.NO_WRAP); //nowrap per evitare \n
-                mydashkey = "Basic " + mydashkey;
-                //Log.w("key", mydashkey);
-                headers.put("Authorization", mydashkey);
-                return headers;
-            }
-            // -d parameters
-            @Override
-            protected Map<String, String> getParams()
-            {
-                Map<String, String>  params = new HashMap<>();
-                params.put("grant_type", "client_credentials");
-                return params;
-            }
-        };
-        requestQueue.add(jsonreq);
     }
 
     //search call web api spotify
@@ -559,16 +515,15 @@ public class MainActivity extends AppCompatActivity {
         String requrl = "https://api.spotify.com/v1/search?q=" + output.get(0).getTitle() + "&type=track&market=IT&limit=1&offset=0";
         JsonObjectRequest jsonreq = new JsonObjectRequest
                 (Request.Method.GET, requrl, null, new Response.Listener<JSONObject>() {
-
                     @Override
                     public void onResponse(JSONObject response) {
-                        JSONObject tracks = null;
-                        JSONArray items = null;
-                        JSONObject urls = null;
+                        JSONObject tracks;
+                        JSONArray items;
+                        JSONObject urls;
                         String songlink = null;
                         String songname = null;
-                        JSONArray artists = null;
-                        JSONObject artist = null;
+                        JSONArray artists;
+                        JSONObject artist;
                         String artistname = null;
                         try {
                             tracks = response.getJSONObject("tracks");
@@ -582,12 +537,12 @@ public class MainActivity extends AppCompatActivity {
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        Log.w("songname", songname);
-                        Log.w("artistname", artistname);
-                        Log.w("songlink", songlink);
-                        Log.w("jsonresp", response.toString().replaceAll("\\\\", ""));
+                        //Log.w("songname", songname);
+                        //Log.w("artistname", artistname);
+                        //Log.w("songlink", songlink);
+                        //Log.w("jsonresp", response.toString().replaceAll("\\\\", ""));
                         //ADD TO DB
-                        if (handler.addPic(tmpUri, getMyPosition(tmpPath), songname + " - " + artistname, songlink) == -1) {
+                        if (handler.addPic(tmpUri, getPositionFromFile(tmpPath), songname + " - " + artistname, songlink) == -1) {
                             Toast.makeText(MainActivity.this, "Photo already present", Toast.LENGTH_SHORT).show();
                         }
                         db = handler.getWritableDatabase();
@@ -605,15 +560,15 @@ public class MainActivity extends AppCompatActivity {
                 })
         {
             @Override
-            public Map<String,String> getHeaders() throws AuthFailureError {
-                HashMap headers = new HashMap();
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<>();
                 headers.put("Accept", "application/json");
                 headers.put("Content-Type", "application/json");
                 headers.put("Authorization", "Bearer " + sessionToken);
                 return headers;
             }
         };
-        requestQueue.add(jsonreq);
+        //requestQueue.add(jsonreq);
     }
 
     //PERMISSION RESULT

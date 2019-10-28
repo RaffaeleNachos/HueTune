@@ -12,34 +12,9 @@ import java.util.Locale;
 
 public class PicDBHandler extends SQLiteOpenHelper {
 
-    /*private class myPic{
-        String pic;
-        String loc;
-        String song;
-
-        public myPic(String pic, String loc, String song){
-            this.pic = pic;
-            this.loc = loc;
-            this.song = song;
-        }
-
-        String getPic(){
-            return this.pic;
-        }
-
-        String getLoc(){
-            return this.loc;
-        }
-
-        String getSong(){
-            return this.song;
-        }
-    }
-*/
-
     //Database version.
     //Note: Increase the database version every-time you make changes to your table structure.
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     //Database Name
     private static final String DATABASE_NAME = "huepics";
@@ -106,55 +81,6 @@ public class PicDBHandler extends SQLiteOpenHelper {
 
         return (int)db.insert(TABLE_PICS, null, values);
     }
-
-    /*public myPic getmyPic(int studentID) {
-
-        SQLiteDatabase db = this.getReadableDatabase();
-
-
-        //You can browse to the query method to know more about the arguments.
-        Cursor cursor = db.query(TABLE_PICS,
-                new String[] { KEY_PICS_ID, KEY_PICS_GPS, KEY_PICS_SONG },
-                KEY_PICS_ID + "=?",
-                new String[] { String.valueOf(studentID) },
-                null,
-                null,
-                null,
-                null);
-
-        if (cursor != null)
-            cursor.moveToFirst();
-
-        myPic p = new myPic(cursor.getString(0), cursor.getString(1), cursor.getString(2));
-
-        //Return Student
-        return p;
-    }
-
-    // Getting All Students
-    public List<myPic> getAllPic() {
-        List<myPic> picList = new ArrayList<myPic>();
-
-        // Select All Query
-        String selectQuery = "SELECT  * FROM " + TABLE_PICS;
-
-        SQLiteDatabase db = this.getWritableDatabase();
-        Cursor cursor = db.rawQuery(selectQuery, null);
-
-        // Looping through all rows and adding to list
-        if (cursor.moveToFirst()) {
-            do {
-                myPic student = new myPic(
-                        cursor.getString(0),
-                        cursor.getString(1),
-                        cursor.getString(2));
-                picList.add(student);
-            } while (cursor.moveToNext());
-        }
-
-        // return student list
-        return picList;
-    }*/
 
     public void updatePic(String pic, String newloc) {
         SQLiteDatabase db = this.getWritableDatabase();

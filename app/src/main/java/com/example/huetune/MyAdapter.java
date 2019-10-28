@@ -24,9 +24,10 @@ public class MyAdapter extends CursorAdapter {
     }
 
     @Override
-    public void bindView(View view, final Context context, Cursor cursor) {
+    public void bindView(View view, Context context, Cursor cursor) {
         //Find fields to populate in inflated template
         ImageView myImg = view.findViewById(R.id.photoView);
+        myImg.setVisibility(View.INVISIBLE);
         TextView myLoc = view.findViewById(R.id.locationView);
         myLoc.setSelected(true);
         TextView mySong = view.findViewById(R.id.songView);
@@ -37,7 +38,8 @@ public class MyAdapter extends CursorAdapter {
         String tune = cursor.getString(cursor.getColumnIndexOrThrow("song"));
         //Populate fields with extracted properties
         //myImg.setImageURI(Uri.parse(img)); //SUPER SLOW! Should do it with async
-        Glide.with(view).load(img).centerCrop().into(myImg); //library that uses asyncTask and caching, fast and super simple, let's use it :)
+        new ImageLoaderClass(myImg, context).execute(img);
+        //Glide.with(view).load(img).centerCrop().into(myImg); //library that uses asyncTask and caching, fast and super simple, let's use it :)
         myLoc.setText(String.valueOf(loc));
         mySong.setText(String.valueOf(tune));
     }
