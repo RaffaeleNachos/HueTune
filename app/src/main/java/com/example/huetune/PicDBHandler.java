@@ -14,7 +14,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
 
     //Database version.
     //Note: Increase the database version every-time you make changes to your table structure.
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 6;
 
     //Database Name
     private static final String DATABASE_NAME = "huepics";
@@ -82,9 +82,16 @@ public class PicDBHandler extends SQLiteOpenHelper {
         return (int)db.insert(TABLE_PICS, null, values);
     }
 
-    public void updatePic(String pic, String newloc) {
+    public void updateLocPic(String pic, String newloc) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_GPS + " = " + "\"" + newloc + "\"" + " WHERE " + KEY_PICS_ID + " = " + "\"" + pic + "\"");
+        db.close();
+    }
+
+    public void updateSongPic(String pic, String newSong, String newSongLink) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_SONG + " = " + "\"" + newSong + "\"" + " WHERE " + KEY_PICS_ID + " = " + "\"" + pic + "\"");
+        db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_SLINK + " = " + "\"" + newSongLink + "\"" + " WHERE " + KEY_PICS_ID + " = " + "\"" + pic + "\"");
         db.close();
     }
 
