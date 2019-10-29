@@ -6,13 +6,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import androidx.exifinterface.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -21,7 +18,6 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -42,7 +38,6 @@ import androidx.core.content.FileProvider;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.View;
 import android.view.Menu;
@@ -56,12 +51,10 @@ import androidx.appcompat.widget.SearchView;
 
 import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -330,7 +323,6 @@ public class MainActivity extends AppCompatActivity {
             }
             tmpcursor = adapter.getCursor();
             tmpcursor.moveToPosition(itemPosition); //si sposta all'indice
-            //TODO async
             //from https://developer.android.com/training/location/retrieve-current.html
             fusedLocationClient.getLastLocation() //getLastLocation restituisce un Task, esso rappresenta una operazione asincrona (https://developers.google.com/android/reference/com/google/android/gms/tasks/Task)
                     .addOnSuccessListener(this, new OnSuccessListener<Location>() {

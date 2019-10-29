@@ -16,7 +16,7 @@ import java.util.List;
 
 public class GeocodeTask extends AsyncTask<String, Void, Void> {
 
-    private List<Address> addresses;
+    private List<Address> addresses = null;
     private PicDBHandler handler;
     private MyAdapter adapter;
     private Geocoder geocoder;
@@ -55,7 +55,11 @@ public class GeocodeTask extends AsyncTask<String, Void, Void> {
 
     @Override
     protected void onPostExecute(Void voids) { //eseguito nel Thread UI
-        handler.updateLocPic(mykey,addresses.get(0).getLocality() + ", " + addresses.get(0).getAdminArea());
+        if (addresses!=null) {
+            handler.updateLocPic(mykey, addresses.get(0).getLocality() + ", " + addresses.get(0).getAdminArea());
+        } else {
+            handler.updateLocPic(mykey, "Choose Location");
+        }
         SQLiteDatabase db = handler.getWritableDatabase();
         Cursor myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
         adapter.changeCursor(myCursor);
