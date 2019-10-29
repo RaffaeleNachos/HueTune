@@ -334,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
             tmpcursor.moveToPosition(itemPosition); //si sposta all'indice
             //TODO async
             //from https://developer.android.com/training/location/retrieve-current.html
-            fusedLocationClient.getLastLocation()
+            fusedLocationClient.getLastLocation() //getLastLocation restituisce un Task, esso rappresenta una operazione asincrona (https://developers.google.com/android/reference/com/google/android/gms/tasks/Task)
                     .addOnSuccessListener(this, new OnSuccessListener<Location>() {
                         @Override
                         public void onSuccess(Location location) {
@@ -418,7 +418,7 @@ public class MainActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PICK_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
             Uri imageUri = data.getData(); //data in questa risposta è la uri e un flag sconosciuto boh
-            if (handler.addPic(imageUri.toString(), getPositionFromFile(null), "Finding the song...", "www.spotify.com") == -1) {
+            if (handler.addPic(imageUri.toString(), "Choose Location", "Finding the song...", "www.spotify.com") == -1) {
                 Toast.makeText(MainActivity.this, "Photo already present", Toast.LENGTH_SHORT).show();
             } else {
                 db = handler.getWritableDatabase();
@@ -429,13 +429,14 @@ public class MainActivity extends AppCompatActivity {
             //mySpotifyGET(imageUri.toString(), null);
         }
         if (requestCode == TAKE_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
-            if (handler.addPic(currentPhotoUri, getPositionFromFile(currentPhotoPath), "Finding the song...", "www.spotify.com") == -1) {
+            if (handler.addPic(currentPhotoUri, "Loading Location...", "Finding the song...", "www.spotify.com") == -1) {
                 Toast.makeText(MainActivity.this, "Photo already present", Toast.LENGTH_SHORT).show();
             } else {
                 db = handler.getWritableDatabase();
                 myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
                 adapter.changeCursor(myCursor);
                 new GetSpotifySongWithAI(MainActivity.this, handler, adapter, sessionToken, MainActivity.this).execute(currentPhotoUri);
+                new GeocodeTask(handler, adapter, geocoder, currentPhotoUri).execute(currentPhotoPath);
             }
             //mySpotifyGET(currentPhotoUri, currentPhotoPath);
         }
@@ -490,31 +491,6 @@ public class MainActivity extends AppCompatActivity {
         );
         currentPhotoPath = image.getAbsolutePath();
         return image;
-    }
-
-    //position taken from exif data
-    private String getPositionFromFile(String inputfile) {
-        if(inputfile!=null) {
-            ExifInterface myexif = null;
-            try {
-                myexif = new ExifInterface(inputfile);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            double[] latlong = null;
-            if (myexif != null) {
-                latlong = myexif.getLatLong();
-            }
-            if(latlong!=null) {
-                try {
-                    addresses = geocoder.getFromLocation(latlong[0], latlong[1], 1);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                return addresses.get(0).getLocality() + ", " + addresses.get(0).getAdminArea();
-            }
-        }
-        return "Choose Position";
     }
 
     //get session token from soptify web api call

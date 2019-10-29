@@ -42,7 +42,6 @@ public class GetSpotifySongWithAI extends AsyncTask<String, Void, Void> {
         this.handler = handler;
         this.adapter = adapter;
         this.sessionToken = sessionToken;
-        System.out.println(sessionToken);
         this.myActivity=myActivity;
         requestQueue = Volley.newRequestQueue(ctx);
     }
