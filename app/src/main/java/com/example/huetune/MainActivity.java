@@ -97,9 +97,7 @@ public class MainActivity extends AppCompatActivity {
     private Integer itemPosition;
     private FusedLocationProviderClient fusedLocationClient;
 
-    //TODO make update queries aynctask?
     //TODO fix permissions results
-    //TODO use geocoder not in Thread UI
     //TODO fix image rotation
 
     @Override
@@ -418,7 +416,7 @@ public class MainActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PICK_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
             Uri imageUri = data.getData(); //data in questa risposta è la uri e un flag sconosciuto boh
-            if (handler.addPic(imageUri.toString(), "Choose Location", "Finding the song...", "www.spotify.com") == -1) {
+            if (handler.addPic(imageUri.toString(), "Choose Location", "Finding the song...", "https://open.spotify.com") == -1) {
                 Toast.makeText(MainActivity.this, "Photo already present", Toast.LENGTH_SHORT).show();
             } else {
                 db = handler.getWritableDatabase();
@@ -429,7 +427,7 @@ public class MainActivity extends AppCompatActivity {
             //mySpotifyGET(imageUri.toString(), null);
         }
         if (requestCode == TAKE_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
-            if (handler.addPic(currentPhotoUri, "Loading Location...", "Finding the song...", "www.spotify.com") == -1) {
+            if (handler.addPic(currentPhotoUri, "Loading Location...", "Finding the song...", " https://open.spotify.com") == -1) {
                 Toast.makeText(MainActivity.this, "Photo already present", Toast.LENGTH_SHORT).show();
             } else {
                 db = handler.getWritableDatabase();
