@@ -29,20 +29,20 @@ import java.util.List;
 import java.util.Map;
 
 public class GetSpotifySongWithAI extends AsyncTask<String, Void, Void> {
-    //TODO weakreference
-    private Context ctx;
+
+    private final WeakReference<Context> myctx;
+    private final WeakReference<PicDBHandler> handler;
+    private final WeakReference<MyAdapter> adapter;
+    private final WeakReference<String> sessionToken;
+    private final WeakReference<Activity> myActivity;
     private RequestQueue requestQueue;
-    private PicDBHandler handler;
-    private MyAdapter adapter;
-    private String sessionToken;
-    private Activity myActivity;
 
     GetSpotifySongWithAI(Context ctx, PicDBHandler handler, MyAdapter adapter, String sessionToken, Activity myActivity){
-        this.ctx = ctx;
-        this.handler = handler;
-        this.adapter = adapter;
-        this.sessionToken = sessionToken;
-        this.myActivity=myActivity;
+        this.myctx = new WeakReference<>(ctx);
+        this.handler = new WeakReference<>(handler);
+        this.adapter = new WeakReference<>(adapter);
+        this.sessionToken = new WeakReference<>(sessionToken);
+        this.myActivity = new WeakReference<>(myActivity);
         requestQueue = Volley.newRequestQueue(ctx);
     }
 
@@ -54,13 +54,18 @@ public class GetSpotifySongWithAI extends AsyncTask<String, Void, Void> {
 
     //search call web api spotify
     private void mySpotifyGET(final String tmpUri){
+        final Context tmpCtx = myctx.get();
+        final PicDBHandler tmpHandler = handler.get();
+        final MyAdapter tmpAdapter = adapter.get();
+        final String tmpToken = sessionToken.get();
+        Activity tmpActivity = myActivity.get();
         //TFLITE TRY
         List<Classifier.Recognition> output = null;
         try {
-            InputStream image_stream = ctx.getContentResolver().openInputStream(Uri.parse(tmpUri));
+            InputStream image_stream = tmpCtx.getContentResolver().openInputStream(Uri.parse(tmpUri));
             Bitmap myBitmap = BitmapFactory.decodeStream(image_stream);
             myBitmap = Bitmap.createScaledBitmap(myBitmap, 224, 224, false);
-            ClassifierQuantizedMobileNet myImgClass = new ClassifierQuantizedMobileNet(myActivity, 1);
+            ClassifierQuantizedMobileNet myImgClass = new ClassifierQuantizedMobileNet(tmpActivity, 1);
             output = myImgClass.recognizeImage(myBitmap);
         } catch (IOException e) {
             e.printStackTrace();
@@ -95,10 +100,10 @@ public class GetSpotifySongWithAI extends AsyncTask<String, Void, Void> {
                         //Log.w("songlink", songlink);
                         //Log.w("jsonresp", response.toString().replaceAll("\\\\", ""));
                         //ADD TO DB
-                        handler.updateSongPic(tmpUri, songname + " - " + artistname, songlink);
-                        SQLiteDatabase db = handler.getWritableDatabase();
+                        tmpHandler.updateSongPic(tmpUri, songname + " - " + artistname, songlink);
+                        SQLiteDatabase db = tmpHandler.getWritableDatabase();
                         Cursor myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
-                        adapter.changeCursor(myCursor);
+                        tmpAdapter.changeCursor(myCursor);
                     }
                 }, new Response.ErrorListener() {
 
@@ -106,7 +111,7 @@ public class GetSpotifySongWithAI extends AsyncTask<String, Void, Void> {
                     public void onErrorResponse(VolleyError error) {
                         //Log.w("errorresp", error.toString());
                         //ADD TO DB WITH ERROR
-                        Toast.makeText(ctx, "Spotify Response Error", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(tmpCtx, "Spotify Response Error", Toast.LENGTH_SHORT).show();
                     }
                 })
         {
@@ -115,7 +120,7 @@ public class GetSpotifySongWithAI extends AsyncTask<String, Void, Void> {
                 HashMap<String, String> headers = new HashMap<>();
                 headers.put("Accept", "application/json");
                 headers.put("Content-Type", "application/json");
-                headers.put("Authorization", "Bearer " + sessionToken);
+                headers.put("Authorization", "Bearer " + tmpToken);
                 return headers;
             }
         };

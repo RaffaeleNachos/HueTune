@@ -90,8 +90,7 @@ public class MainActivity extends AppCompatActivity {
     private Integer itemPosition;
     private FusedLocationProviderClient fusedLocationClient;
 
-    //TODO fix permissions results
-    //TODO fix image rotation
+    //TODO fix permissions results with graceful degrade
 
     @Override
     protected void onResume(){ //per quando ritorna da HueBin
@@ -509,7 +508,7 @@ public class MainActivity extends AppCompatActivity {
         {
             // -H parametes
             @Override
-            public Map getHeaders() throws AuthFailureError {
+            public Map getHeaders() {
                 HashMap headers = new HashMap();
                 String mydashkey = "24ffb05d1e82431b91638ab90386fc84:e684a244a25e47d09085bbcc295e663a"; //trasformo codiceid:keyid di spotify in base 64
                 mydashkey = Base64.encodeToString(mydashkey.getBytes(), Base64.NO_WRAP); //nowrap per evitare \n
