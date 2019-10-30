@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 public class GetSpotifySongWithAI extends AsyncTask<String, Void, Void> {
-
+    //TODO weakreference
     private Context ctx;
     private RequestQueue requestQueue;
     private PicDBHandler handler;

@@ -1,6 +1,5 @@
 package com.example.huetune;
 
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
@@ -15,7 +14,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class GeocodeTask extends AsyncTask<String, Void, Void> {
-
+    //TODO weakreference
     private List<Address> addresses = null;
     private PicDBHandler handler;
     private MyAdapter adapter;

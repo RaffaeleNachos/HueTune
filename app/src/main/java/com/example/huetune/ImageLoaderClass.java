@@ -3,6 +3,7 @@ package com.example.huetune;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -17,15 +18,17 @@ import java.lang.ref.WeakReference;
 public class ImageLoaderClass extends AsyncTask<String, Void, Bitmap> {
     private final WeakReference<ImageView> imageViewReference;
     private final WeakReference<Context> ctx;
+    private InputStream image_stream;
 
     ImageLoaderClass(ImageView imageView, Context ctx) {
         imageViewReference = new WeakReference<>(imageView);
         this.ctx = new WeakReference<>(ctx);
+        image_stream = null;
     }
 
     @Override
     protected Bitmap doInBackground(String... str) {
-        InputStream image_stream = null;
+        image_stream = null;
         try {
             Context myctx = ctx.get();
             image_stream = myctx.getContentResolver().openInputStream(Uri.parse(str[0]));
@@ -41,6 +44,11 @@ public class ImageLoaderClass extends AsyncTask<String, Void, Bitmap> {
             e.printStackTrace();
         }
         myBitmap = Bitmap.createScaledBitmap(myBitmap, myBitmap.getWidth()/5, myBitmap.getHeight()/5, false);
+        //modo più veloce per fixare la rotazione dell'immagine nei telefoni che scattano in landscape mode anche se messi in portrait
+        //la soluzione più efficiente e corretta sarebbe andare a leggere gli exif che contengono una etichetta ExifInterface.TAG_ORIENTATION e ruotare su quel valore
+        if (str[0].contains("HUETUNE")) {
+            myBitmap = rotateImage(myBitmap, 90);
+        }
         return myBitmap;
     }
 
@@ -60,4 +68,11 @@ public class ImageLoaderClass extends AsyncTask<String, Void, Bitmap> {
             }
         }
     }
+
+    public static Bitmap rotateImage(Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+    }
+
 }
