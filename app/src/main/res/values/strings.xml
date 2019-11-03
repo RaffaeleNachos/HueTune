@@ -1,14 +1,12 @@
 <resources>
     <string name="app_name">HueTune</string>
-    <string name="action_bin">Deleted Recently</string>
-    <string name="action_del">Delete All Photos</string>
+    <string name="action_bin">Deleted Recently (HueBin)</string>
+    <string name="action_del">Delete All HuePics</string>
     <string name="action_search">Search</string>
-    <string name="myapikey">AIzaSyCpyTKh4KmzLSWMV1jiD-S2FADGxtXLKC4</string>
     <string name="cm_change">Choose Location</string>
     <string name="cm_play">Play</string>
-    <string name="cm_btshare">Bluetooth Share</string>
-    <string name="cm_delete">Delete Photo</string>
+    <string name="cm_delete">Delete HuePic</string>
     <string name="cm_curr">Use Current Location</string>
-    <string name="bin_restoreall">Restore all Pics</string>
-    <string name="bin_restore">Restore Pic</string>
+    <string name="bin_restoreall">Restore All HuePics</string>
+    <string name="bin_restore">Restore HuePic</string>
 </resources>

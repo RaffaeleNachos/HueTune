@@ -2,7 +2,6 @@ package com.example.huetune;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +9,7 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
+import com.bumptech.glide.Glide;  //Glide è una alternativa al codice che ho scritto per caricare in Async
 
 public class MyAdapter extends CursorAdapter {
 
@@ -25,21 +24,18 @@ public class MyAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        //Find fields to populate in inflated template
         ImageView myImg = view.findViewById(R.id.photoView);
         myImg.setVisibility(View.INVISIBLE);
         TextView myLoc = view.findViewById(R.id.locationView);
         myLoc.setSelected(true);
         TextView mySong = view.findViewById(R.id.songView);
         mySong.setSelected(true);
-        //Extract properties from cursor
         String img = cursor.getString(cursor.getColumnIndexOrThrow("picuri"));
         String loc = cursor.getString(cursor.getColumnIndexOrThrow("location"));
         String tune = cursor.getString(cursor.getColumnIndexOrThrow("song"));
-        //Populate fields with extracted properties
         //myImg.setImageURI(Uri.parse(img)); //SUPER SLOW! Should do it with async
         new ImageLoaderClass(myImg, context).execute(img);
-        //Glide.with(view).load(img).centerCrop().into(myImg); //library that uses asyncTask and caching, fast and super simple, let's use it :)
+        //Glide.with(view).load(img).centerCrop().into(myImg); //library that uses asyncTask and caching, fast and super simple
         myLoc.setText(String.valueOf(loc));
         mySong.setText(String.valueOf(tune));
     }

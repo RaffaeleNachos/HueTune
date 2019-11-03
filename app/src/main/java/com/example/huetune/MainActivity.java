@@ -13,7 +13,6 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -109,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        //FAB
+        //FloatingActionButton
         btncam = findViewById(R.id.addc);
         llc = findViewById(R.id.llc);
         btncam.setOnClickListener(new View.OnClickListener() {
@@ -184,7 +183,6 @@ public class MainActivity extends AppCompatActivity {
 
         //PERMISSIONS FOR SPOTIFY URL INTENT
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
-            // Permission is not granted
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.INTERNET},
                     PERM_REQUEST_INTERNET);
@@ -192,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
 
         //DATABASE
         handler = new PicDBHandler(this);
-        //handler.deleteOLDPics(); //cancella le foto nel cestino più vecchie di 30 giorni
+        handler.deleteOLDPics(); //cancella le foto nel cestino più vecchie di 30 giorni
 
         db = handler.getWritableDatabase();
         //si usa rawQuery perchè restituisce un cursor
@@ -233,7 +231,6 @@ public class MainActivity extends AppCompatActivity {
     //inflate menu in toolbar viene chiamato alla creazione dell'activity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         MenuItem searchvwi = menu.findItem(R.id.action_search);
         searchvw = (SearchView) searchvwi.getActionView();
@@ -315,7 +312,6 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
         if(id == R.id.cm_id_curr) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // Permission is not granted
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
                         PERM_REQUEST_GPS);
@@ -375,7 +371,7 @@ public class MainActivity extends AppCompatActivity {
             sbar.setAction("UNDO", new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    handler.resumePic();
+                    handler.resumePic(); //viene salvata in una stringa nell'handler
                     db = handler.getWritableDatabase();
                     myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
                     adapter.changeCursor(myCursor);
@@ -415,10 +411,9 @@ public class MainActivity extends AppCompatActivity {
                 adapter.changeCursor(myCursor);
                 new GetSpotifySongWithAI(MainActivity.this, handler, adapter, sessionToken, MainActivity.this).execute(imageUri.toString());
             }
-            //mySpotifyGET(imageUri.toString(), null);
         }
         if (requestCode == TAKE_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
-            if (handler.addPic(currentPhotoUri, "Loading Location...", "Finding the song...", " https://open.spotify.com") == -1) {
+            if (handler.addPic(currentPhotoUri, "Loading Location...", "Finding the song...", "https://open.spotify.com") == -1) {
                 Toast.makeText(MainActivity.this, "Photo already present", Toast.LENGTH_SHORT).show();
             } else {
                 db = handler.getWritableDatabase();
@@ -427,7 +422,6 @@ public class MainActivity extends AppCompatActivity {
                 new GetSpotifySongWithAI(MainActivity.this, handler, adapter, sessionToken, MainActivity.this).execute(currentPhotoUri);
                 new GeocodeTask(handler, adapter, geocoder, currentPhotoUri).execute(currentPhotoPath);
             }
-            //mySpotifyGET(currentPhotoUri, currentPhotoPath);
         }
         if (requestCode == AUTOCOMPLETE_REQUEST_CODE && resultCode==Activity.RESULT_OK) {
             tmpcursor = adapter.getCursor();
@@ -534,24 +528,21 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == PERM_REQUEST_GPS) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // permission was granted, yay! Do the
-                // contacts-related task you need to do.
+                //permessi abilitati
             } else {
                 //DISABILITA GEOLOCALIZZAZIONE
             }
         }
         if (requestCode == PERM_REQUEST_WREXT) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // permission was granted, yay! Do the
-                // contacts-related task you need to do.
+                //permessi abilitati
             } else {
                 //DISABILITA SCATTARE FOTO
             }
         }
         if (requestCode == PERM_REQUEST_INTERNET) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // permission was granted, yay! Do the
-                // contacts-related task you need to do.
+                //permessi abilitati
             } else {
                 //DISABILITA USO INTERNET
             }

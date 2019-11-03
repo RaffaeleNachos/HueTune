@@ -59,7 +59,7 @@ public class GetSpotifySongWithAI extends AsyncTask<String, Void, Void> {
         final MyAdapter tmpAdapter = adapter.get();
         final String tmpToken = sessionToken.get();
         Activity tmpActivity = myActivity.get();
-        //TFLITE TRY
+        //TensorFlowLITE in azione
         List<Classifier.Recognition> output = null;
         try {
             InputStream image_stream = tmpCtx.getContentResolver().openInputStream(Uri.parse(tmpUri));
@@ -70,7 +70,7 @@ public class GetSpotifySongWithAI extends AsyncTask<String, Void, Void> {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        String requrl = "https://api.spotify.com/v1/search?q=" + output.get(0).getTitle() + "&type=track&market=IT&limit=1&offset=0";
+        String requrl = "https://api.spotify.com/v1/search?q=" + output.get(0).getTitle().replaceAll("\\s", "%20") + "&type=track&market=IT&limit=1&offset=0";
         JsonObjectRequest jsonreq = new JsonObjectRequest
                 (Request.Method.GET, requrl, null, new Response.Listener<JSONObject>() {
                     @Override
@@ -110,7 +110,7 @@ public class GetSpotifySongWithAI extends AsyncTask<String, Void, Void> {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         //Log.w("errorresp", error.toString());
-                        //ADD TO DB WITH ERROR
+                        //ADD TO DB WITH ERROR SHOULD BE A BETTER OPTION, MAYBE NEXT TIME
                         Toast.makeText(tmpCtx, "Spotify Response Error", Toast.LENGTH_SHORT).show();
                     }
                 })

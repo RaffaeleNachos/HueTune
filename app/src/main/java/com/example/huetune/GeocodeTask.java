@@ -16,6 +16,7 @@ import java.util.List;
 
 public class GeocodeTask extends AsyncTask<String, Void, Void> {
 
+    //uso le weak reference perchè il Garbage Collector è mio amico!
     private final WeakReference<PicDBHandler> handler;
     private final WeakReference<MyAdapter> adapter;
     private final WeakReference<Geocoder> geocoder;

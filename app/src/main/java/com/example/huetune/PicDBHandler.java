@@ -12,17 +12,14 @@ import java.util.Locale;
 
 public class PicDBHandler extends SQLiteOpenHelper {
 
-    //Database version.
-    //Note: Increase the database version every-time you make changes to your table structure.
+    //Database version: increase the database version every changes to your table structure
     private static final int DATABASE_VERSION = 6;
 
-    //Database Name
     private static final String DATABASE_NAME = "huepics";
 
-    //You will declare all your table names here.
     private static final String TABLE_PICS = "pics";
 
-    // pics Table Columns names
+    //pics columns names
     private static final String KEY_PICS_ID = "picuri";
     private static final String KEY_PICS_GPS = "location";
     private static final String KEY_PICS_SONG = "song";
@@ -34,13 +31,10 @@ public class PicDBHandler extends SQLiteOpenHelper {
     private ArrayList<String> lastdeletedpics = new ArrayList<>();
     private Cursor tmpcursor = null;
 
-
-    //Here context passed will be of application and not activity.
     public PicDBHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    //This method will be called every-time the file is called.
     @Override
     public void onCreate(SQLiteDatabase db) {
         //Query to create table
@@ -59,20 +53,18 @@ public class PicDBHandler extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        //This method will be called only if there is change in DATABASE_VERSION.
+        //This method will be called only if DATABASE_VERSION is changed
 
-        // Drop older table if existed
+        //Drop older table if existed
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_PICS);
 
-        // Create tables again
+        //Create new table
         onCreate(db);
     }
 
-    // Add New Student
     public int addPic(String uri, String location, String song, String slink) {
         SQLiteDatabase db = this.getWritableDatabase();
 
-        //Content values use KEY-VALUE pair concept
         ContentValues values = new ContentValues();
         values.put(KEY_PICS_ID, uri);
         values.put(KEY_PICS_GPS, location);
@@ -146,9 +138,9 @@ public class PicDBHandler extends SQLiteOpenHelper {
 
     public void deleteOLDPics(){
         SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL("DELETE FROM " + TABLE_PICS + " WHERE " + KEY_PICS_DATE + " >= date('now','-30 day')");
+        db.execSQL("DELETE FROM " + TABLE_PICS + " WHERE " + KEY_PICS_DATE + " <= date('now','-30 day')");
         //salvando la data come anno/mese/giorno è possibile eseguire una comparazione tra stringhe
-        //dato che SQLLite non accetta DATE coem tipo ma solo TEXT
+        //dato che SQLLite non accetta DATE come tipo ma solo TEXT
         db.close();
     }
 }

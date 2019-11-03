@@ -9,6 +9,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -16,6 +17,7 @@ import java.io.InputStream;
 import java.lang.ref.WeakReference;
 
 public class ImageLoaderClass extends AsyncTask<String, Void, Bitmap> {
+
     private final WeakReference<ImageView> imageViewReference;
     private final WeakReference<Context> ctx;
     private InputStream image_stream;
@@ -34,27 +36,29 @@ public class ImageLoaderClass extends AsyncTask<String, Void, Bitmap> {
             image_stream = myctx.getContentResolver().openInputStream(Uri.parse(str[0]));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+            image_stream = null;
         }
-        Bitmap myBitmap = BitmapFactory.decodeStream(image_stream);
+        Bitmap myBitmap = null;
         try {
             if (image_stream != null) {
+                myBitmap = BitmapFactory.decodeStream(image_stream);
                 image_stream.close();
+                myBitmap = Bitmap.createScaledBitmap(myBitmap, myBitmap.getWidth()/5, myBitmap.getHeight()/5, false);
+                //modo più veloce per fixare la rotazione dell'immagine nei telefoni che scattano in landscape mode anche se messi in portrait
+                //la soluzione più efficiente e corretta sarebbe andare a leggere gli exif che contengono una etichetta ExifInterface.TAG_ORIENTATION e ruotare rispetto quel valore
+                if (str[0].contains("HUETUNE")) {
+                    myBitmap = rotateImage(myBitmap, 90);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        myBitmap = Bitmap.createScaledBitmap(myBitmap, myBitmap.getWidth()/5, myBitmap.getHeight()/5, false);
-        //modo più veloce per fixare la rotazione dell'immagine nei telefoni che scattano in landscape mode anche se messi in portrait
-        //la soluzione più efficiente e corretta sarebbe andare a leggere gli exif che contengono una etichetta ExifInterface.TAG_ORIENTATION e ruotare su quel valore
-        if (str[0].contains("HUETUNE")) {
-            myBitmap = rotateImage(myBitmap, 90);
         }
         return myBitmap;
     }
 
     @Override
     protected void onPostExecute(Bitmap bitmap) { //eseguito nel Thread UI
-        if (isCancelled()) {
+        if (isCancelled()) { //se il task viene killato
             bitmap = null;
         }
 
@@ -64,12 +68,13 @@ public class ImageLoaderClass extends AsyncTask<String, Void, Bitmap> {
                 imageView.setImageBitmap(bitmap);
                 imageView.setVisibility(View.VISIBLE);
             } else {
-                Log.w("errore", "impossibile caricare immagine");
+                Context myctx = ctx.get();
+                Toast.makeText(myctx, "Error Loading Image", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
-    public static Bitmap rotateImage(Bitmap source, float angle) {
+    public static Bitmap rotateImage(Bitmap source, float angle) { //metodo di utilità per ruotare bitmap
         Matrix matrix = new Matrix();
         matrix.postRotate(angle);
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
