@@ -143,6 +143,9 @@ public class GetSpotifySongWithAI extends AsyncTask<String, Void, Void> {
         try {
             InputStream image_stream = tmpCtx.getContentResolver().openInputStream(tmpUri);
             Bitmap myBitmap = BitmapFactory.decodeStream(image_stream);
+            if (image_stream != null) {
+                image_stream.close();
+            }
             myBitmap = Bitmap.createScaledBitmap(myBitmap, 224, 224, false);
             ClassifierQuantizedMobileNet myImgClass = new ClassifierQuantizedMobileNet(tmpActivity, 1);
             output = myImgClass.recognizeImage(myBitmap);

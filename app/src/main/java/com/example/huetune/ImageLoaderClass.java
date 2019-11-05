@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 
@@ -41,6 +42,13 @@ public class ImageLoaderClass extends AsyncTask<String, Void, Bitmap> {
                 e.printStackTrace();
             }
             myBitmap = BitmapFactory.decodeStream(image_stream);
+            try {
+                if (image_stream != null) {
+                    image_stream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         else { //se è un path
             myBitmap = BitmapFactory.decodeFile(path[0]);
