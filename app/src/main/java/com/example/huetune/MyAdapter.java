@@ -25,16 +25,20 @@ public class MyAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ImageView myImg = view.findViewById(R.id.photoView);
-        myImg.setVisibility(View.INVISIBLE);
         TextView myLoc = view.findViewById(R.id.locationView);
         myLoc.setSelected(true);
         TextView mySong = view.findViewById(R.id.songView);
         mySong.setSelected(true);
-        String img = cursor.getString(cursor.getColumnIndexOrThrow("picuri"));
+        String img = cursor.getString(cursor.getColumnIndexOrThrow("pic"));
         String loc = cursor.getString(cursor.getColumnIndexOrThrow("location"));
         String tune = cursor.getString(cursor.getColumnIndexOrThrow("song"));
-        //myImg.setImageURI(Uri.parse(img)); //SUPER SLOW! Should do it with async
-        new ImageLoaderClass(myImg, context).execute(img);
+        String rot = cursor.getString(cursor.getColumnIndexOrThrow("rotation"));
+        //setto un placeholder
+        myImg.setImageDrawable(context.getResources().getDrawable(R.drawable.placeholder));
+        //myImg.setImageURI(Uri.parse(img)); //SUPER SLOW! Eseguo in Async
+        new ImageLoaderClass(myImg, context).execute(img,rot);
+        //Glide è una libreria ottima (funzionano anche le gif animate!)
+        //sto usando un asynctask solo per scopi universitari, per poter far vedere come eseguire un caricamente asincrono.
         //Glide.with(view).load(img).centerCrop().into(myImg); //library that uses asyncTask and caching, fast and super simple
         myLoc.setText(String.valueOf(loc));
         mySong.setText(String.valueOf(tune));

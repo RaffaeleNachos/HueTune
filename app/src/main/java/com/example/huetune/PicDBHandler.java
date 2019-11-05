@@ -12,21 +12,23 @@ import java.util.Locale;
 
 public class PicDBHandler extends SQLiteOpenHelper {
 
-    //Database version: increase the database version every changes to your table structure
-    private static final int DATABASE_VERSION = 6;
+    //Versione Database, va incrementata ogni volta che si esegue un cambiamento alla struttura del database
+    private static final int DATABASE_VERSION = 8;
 
     private static final String DATABASE_NAME = "huepics";
 
+    //nome della tabella principale
     private static final String TABLE_PICS = "pics";
 
-    //pics columns names
-    private static final String KEY_PICS_ID = "picuri";
+    //attributi
+    private static final String KEY_PICS_ID = "pic";
     private static final String KEY_PICS_GPS = "location";
     private static final String KEY_PICS_SONG = "song";
     private static final String KEY_PICS_SLINK = "slink";
     private static final String KEY_PICS_DATE = "date";
+    private static final String KEY_PICS_ROT = "rotation";
 
-    //last deleted pic and pics
+    //variabili per rendere possibile la UNDO della delete
     private String lastdeletedpic = null;
     private ArrayList<String> lastdeletedpics = new ArrayList<>();
     private Cursor tmpcursor = null;
@@ -45,7 +47,8 @@ public class PicDBHandler extends SQLiteOpenHelper {
                 + KEY_PICS_GPS + " TEXT, "
                 + KEY_PICS_SLINK + " TEXT, "
                 + KEY_PICS_DATE + " TEXT, "
-                + KEY_PICS_SONG + " TEXT " + ")";
+                + KEY_PICS_SONG + " TEXT, "
+                + KEY_PICS_ROT + " TEXT " + ")";
 
         //Create table query executed in sqlite
         db.execSQL(CREATE_PICS_TABLE);
@@ -62,6 +65,21 @@ public class PicDBHandler extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    //metodo per aggiugnere immagini scattate dalla fotocamera, ho possibile rotazione e ho un path
+    public int addPic(String path, String location, String song, String slink, String rot) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(KEY_PICS_ID, path);
+        values.put(KEY_PICS_GPS, location);
+        values.put(KEY_PICS_SLINK, slink);
+        values.put(KEY_PICS_SONG, song);
+        values.put(KEY_PICS_ROT, rot);
+
+        return (int)db.insert(TABLE_PICS, null, values);
+    }
+
+    //metodo per aggiungere immagini dalla galleria, non ho rotazione e ho una uri
     public int addPic(String uri, String location, String song, String slink) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -70,16 +88,19 @@ public class PicDBHandler extends SQLiteOpenHelper {
         values.put(KEY_PICS_GPS, location);
         values.put(KEY_PICS_SLINK, slink);
         values.put(KEY_PICS_SONG, song);
+        values.put(KEY_PICS_ROT, "0");
 
         return (int)db.insert(TABLE_PICS, null, values);
     }
 
+    //metodo per aggiornare la posizione della foto
     public void updateLocPic(String pic, String newloc) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_GPS + " = " + "\"" + newloc + "\"" + " WHERE " + KEY_PICS_ID + " = " + "\"" + pic + "\"");
         db.close();
     }
 
+    //metodo per aggiungere la canzone al ritorno dalla chiamata API Spotify
     public void updateSongPic(String pic, String newSong, String newSongLink) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_SONG + " = " + "\"" + newSong + "\"" + " WHERE " + KEY_PICS_ID + " = " + "\"" + pic + "\"");
@@ -87,6 +108,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
         db.close();
     }
 
+    //metodo per cancellare la singola foto (inserisco una data per poter cancellare le foto più vecchie di 30 giorni)
     public void deletePic(String pic) {
         lastdeletedpic = pic;
         SQLiteDatabase db = this.getWritableDatabase();
@@ -95,24 +117,20 @@ public class PicDBHandler extends SQLiteOpenHelper {
         db.close();
     }
 
+    //metodo per UNDO singola pic
     public void resumePic(){
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + "NULL" + " WHERE " + KEY_PICS_ID + " = " + "\"" + lastdeletedpic + "\"");
         db.close();
     }
 
-    public void resumePicFromBin(String key){
-        SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + "NULL" + " WHERE " + KEY_PICS_ID + " = " + "\"" + key + "\"");
-        db.close();
-    }
-
+    //metodo per cancellare tutte le foto
     public void deleteAllPics() {
         SQLiteDatabase db = this.getWritableDatabase();
         lastdeletedpics.clear();
         tmpcursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
         while(tmpcursor.moveToNext()) {
-            lastdeletedpics.add(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")));
+            lastdeletedpics.add(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("pic")));
         }
         String timeStamp = new SimpleDateFormat("yyyy/MM/dd", Locale.ITALY).format(new Date());
         db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + timeStamp);
@@ -120,6 +138,7 @@ public class PicDBHandler extends SQLiteOpenHelper {
         tmpcursor.close();
     }
 
+    //metodo per eseguire l'UNDO della cancellazione di tutte le foto
     public void resumeAllPics() {
         SQLiteDatabase db = this.getWritableDatabase();
         for(int i = 0; i < lastdeletedpics.size(); i++) {
@@ -129,6 +148,14 @@ public class PicDBHandler extends SQLiteOpenHelper {
 
     }
 
+    //metodo per ripristinare una foto dal cestino (HueBin) alla MainActivity
+    public void resumePicFromBin(String key){
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + "NULL" + " WHERE " + KEY_PICS_ID + " = " + "\"" + key + "\"");
+        db.close();
+    }
+
+    //metodo per ripristinare tutte le foto dal cestino (HueBin) alla MainActivity
     public void resumeAllPicsFromBin() {
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL("UPDATE " + TABLE_PICS + " SET " + KEY_PICS_DATE + " = " + "NULL" + " WHERE " + KEY_PICS_DATE + " IS NOT NULL");
@@ -136,9 +163,10 @@ public class PicDBHandler extends SQLiteOpenHelper {
 
     }
 
+    //metodo che mi cancella tutte le foto nel cestino più vecchie di 30 giorni
     public void deleteOLDPics(){
         SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL("DELETE FROM " + TABLE_PICS + " WHERE " + KEY_PICS_DATE + " <= date('now','-30 day')");
+        db.execSQL("DELETE FROM " + TABLE_PICS + " WHERE " + KEY_PICS_DATE + " >= date('now','-30 day')");
         //salvando la data come anno/mese/giorno è possibile eseguire una comparazione tra stringhe
         //dato che SQLLite non accetta DATE come tipo ma solo TEXT
         db.close();

@@ -6,9 +6,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.os.AsyncTask;
 
-
 import androidx.exifinterface.media.ExifInterface;
-
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -20,14 +18,14 @@ public class GeocodeTask extends AsyncTask<String, Void, Void> {
     private final WeakReference<PicDBHandler> handler;
     private final WeakReference<MyAdapter> adapter;
     private final WeakReference<Geocoder> geocoder;
-    private final WeakReference<String> myuri;
+    private final WeakReference<String> mypath;
     private List<Address> addresses = null;
 
-    GeocodeTask(PicDBHandler handler, MyAdapter adapter, Geocoder geocoder, String myuri){
+    GeocodeTask(PicDBHandler handler, MyAdapter adapter, Geocoder geocoder, String mypath){
         this.handler = new WeakReference<>(handler);
         this.adapter = new WeakReference<>(adapter);
         this.geocoder = new WeakReference<>(geocoder);
-        this.myuri = new WeakReference<>(myuri);
+        this.mypath = new WeakReference<>(mypath);
     }
 
     @Override
@@ -36,17 +34,17 @@ public class GeocodeTask extends AsyncTask<String, Void, Void> {
         if(inputfile[0]!=null) {
             ExifInterface myexif = null;
             try {
-                myexif = new ExifInterface(inputfile[0]);
+                myexif = new ExifInterface(inputfile[0]); //ho i miei metadati
             } catch (IOException e) {
                 e.printStackTrace();
             }
             double[] latlong = null;
             if (myexif != null) {
-                latlong = myexif.getLatLong();
+                latlong = myexif.getLatLong(); //mi faccio restituire lat e long in un array di double
             }
             if(latlong!=null) {
                 try {
-                    addresses = geo.getFromLocation(latlong[0], latlong[1], 1);
+                    addresses = geo.getFromLocation(latlong[0], latlong[1], 1); //chiamata al geocoder restituisce una lista di Address
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -59,9 +57,9 @@ public class GeocodeTask extends AsyncTask<String, Void, Void> {
     protected void onPostExecute(Void voids) { //eseguito nel Thread UI
         PicDBHandler tmpHandler = handler.get();
         MyAdapter tmpAdapter = adapter.get();
-        String mykey = myuri.get();
+        String mykey = mypath.get();
         if (addresses!=null) {
-            tmpHandler.updateLocPic(mykey, addresses.get(0).getLocality() + ", " + addresses.get(0).getAdminArea());
+            tmpHandler.updateLocPic(mykey, addresses.get(0).getLocality() + ", " + addresses.get(0).getAdminArea()); //prendo il primo della lista che dovrebbe essere il più accurato
         } else {
             tmpHandler.updateLocPic(mykey, "Choose Location");
         }

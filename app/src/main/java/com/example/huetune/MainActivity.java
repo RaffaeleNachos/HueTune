@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import androidx.exifinterface.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -79,14 +80,13 @@ public class MainActivity extends AppCompatActivity {
     private Cursor myCursor;
     private SQLiteDatabase db;
     private String currentPhotoPath;
-    private String currentPhotoUri;
     private SearchView searchvw;
     private Geocoder geocoder;
     private List<Address> addresses;
     private RequestQueue requestQueue;
     private String sessionToken = null;
     private Cursor tmpcursor;
-    private Integer itemPosition;
+    private int itemPosition;
     private FusedLocationProviderClient fusedLocationClient;
 
     //TODO fix permissions results with graceful degrade
@@ -332,10 +332,10 @@ public class MainActivity extends AppCompatActivity {
                                 }
                                 if (addresses != null) {
                                     String position = addresses.get(0).getLocality() + ", " + addresses.get(0).getAdminArea();
-                                    handler.updateLocPic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")), position);
+                                    handler.updateLocPic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("pic")), position);
                                 }
                                 else {
-                                    handler.updateLocPic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")), "Location not found");
+                                    handler.updateLocPic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("pic")), "Location not found");
                                 }
                                 db = handler.getWritableDatabase();
                                 myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
@@ -388,7 +388,7 @@ public class MainActivity extends AppCompatActivity {
                 llg.startAnimation(AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fab_exp_close));
             }
             clickadd=false;
-            handler.deletePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")));
+            handler.deletePic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("pic")));
             db = handler.getWritableDatabase();
             myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
             adapter.changeCursor(myCursor);
@@ -403,31 +403,52 @@ public class MainActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PICK_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
             Uri imageUri = data.getData(); //data in questa risposta è la uri e un flag sconosciuto boh
-            if (handler.addPic(imageUri.toString(), "Choose Location", "Finding the song...", "https://open.spotify.com") == -1) {
-                Toast.makeText(MainActivity.this, "Photo already present", Toast.LENGTH_SHORT).show();
-            } else {
-                db = handler.getWritableDatabase();
-                myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
-                adapter.changeCursor(myCursor);
-                new GetSpotifySongWithAI(MainActivity.this, handler, adapter, sessionToken, MainActivity.this).execute(imageUri.toString());
+            if (imageUri != null) {
+                if (handler.addPic(imageUri.toString(), "Choose Location", "Finding the song...", "https://open.spotify.com") == -1) {
+                    Toast.makeText(MainActivity.this, "Photo already present", Toast.LENGTH_SHORT).show();
+                } else {
+                    db = handler.getWritableDatabase();
+                    myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
+                    adapter.changeCursor(myCursor);
+                    new GetSpotifySongWithAI(MainActivity.this, handler, adapter, sessionToken, MainActivity.this).execute(imageUri.toString());
+                }
+            }
+            else {
+                Toast.makeText(MainActivity.this, "Retry Loading Image", Toast.LENGTH_SHORT).show();
             }
         }
         if (requestCode == TAKE_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
-            if (handler.addPic(currentPhotoUri, "Loading Location...", "Finding the song...", "https://open.spotify.com") == -1) {
+            //leggo gli exif perchè alcuni smartphone salvano le foto ruotate
+            //cioè anche in portrai mode salvano la foto in landscape mode
+            //ancora peggio se si usa la fotocamera frontale!
+            ExifInterface ei = null;
+            try {
+                ei = new ExifInterface(currentPhotoPath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Integer orientation;
+            if (ei != null) {
+                orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
+            }
+            else {
+                orientation = 0;
+            }
+            if (handler.addPic(currentPhotoPath, "Loading Location...", "Finding the song...", "https://open.spotify.com", orientation.toString()) == -1) {
                 Toast.makeText(MainActivity.this, "Photo already present", Toast.LENGTH_SHORT).show();
             } else {
                 db = handler.getWritableDatabase();
                 myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
                 adapter.changeCursor(myCursor);
-                new GetSpotifySongWithAI(MainActivity.this, handler, adapter, sessionToken, MainActivity.this).execute(currentPhotoUri);
-                new GeocodeTask(handler, adapter, geocoder, currentPhotoUri).execute(currentPhotoPath);
+                new GetSpotifySongWithAI(MainActivity.this, handler, adapter, sessionToken, MainActivity.this).execute(currentPhotoPath);
+                new GeocodeTask(handler, adapter, geocoder, currentPhotoPath).execute(currentPhotoPath);
             }
         }
         if (requestCode == AUTOCOMPLETE_REQUEST_CODE && resultCode==Activity.RESULT_OK) {
             tmpcursor = adapter.getCursor();
             tmpcursor.moveToPosition(itemPosition);
             CarmenFeature feature = PlaceAutocomplete.getPlace(data);
-            handler.updateLocPic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("picuri")), feature.placeName());
+            handler.updateLocPic(tmpcursor.getString(tmpcursor.getColumnIndexOrThrow("pic")), feature.placeName());
             db = handler.getWritableDatabase();
             myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NULL", null);
             adapter.changeCursor(myCursor);
@@ -442,20 +463,19 @@ public class MainActivity extends AppCompatActivity {
         picki.setType("image/*");
         startActivityForResult(picki, PICK_IMAGE_REQUEST);
     }
+
     //take image from camera
     private void reqImageC() {
         TAKE_IMAGE_REQUEST = 2;
         Intent takei = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         File takenpic = null;
         try{
-            takenpic=createImageFile();
+            takenpic = createImageFile();
         } catch (IOException e) {
             e.printStackTrace();
-            //Log.e("IOException", "Error creating picture file");
         }
         if(takenpic!=null){
             Uri photoURI = FileProvider.getUriForFile(this, "com.example.android.provider", takenpic);
-            currentPhotoUri = photoURI.toString();
             takei.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
             startActivityForResult(takei, TAKE_IMAGE_REQUEST);
         }
@@ -483,7 +503,7 @@ public class MainActivity extends AppCompatActivity {
                 (Request.Method.POST, rest, new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        JSONObject token = null;
+                        JSONObject token;
                         try {
                             token = new JSONObject(response);
                             sessionToken = token.getString("access_token");
@@ -502,12 +522,12 @@ public class MainActivity extends AppCompatActivity {
         {
             // -H parametes
             @Override
-            public Map getHeaders() {
+            public Map<String, String> getHeaders() {
                 HashMap headers = new HashMap();
                 String mydashkey = "24ffb05d1e82431b91638ab90386fc84:e684a244a25e47d09085bbcc295e663a"; //trasformo codiceid:keyid di spotify in base 64
                 mydashkey = Base64.encodeToString(mydashkey.getBytes(), Base64.NO_WRAP); //nowrap per evitare \n
                 mydashkey = "Basic " + mydashkey;
-                //Log.w("key", mydashkey);
+                //System.out.println("key: " + mydashkey);
                 headers.put("Authorization", mydashkey);
                 return headers;
             }
@@ -528,22 +548,25 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == PERM_REQUEST_GPS) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                //permessi abilitati
+                System.out.println("permessi abilitati");
             } else {
+                System.out.println("permessi non abilitati");
                 //DISABILITA GEOLOCALIZZAZIONE
             }
         }
         if (requestCode == PERM_REQUEST_WREXT) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                //permessi abilitati
+                System.out.println("permessi abilitati");
             } else {
+                System.out.println("permessi non abilitati");
                 //DISABILITA SCATTARE FOTO
             }
         }
         if (requestCode == PERM_REQUEST_INTERNET) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                //permessi abilitati
+                System.out.println("permessi abilitati");
             } else {
+                System.out.println("permessi non abilitati");
                 //DISABILITA USO INTERNET
             }
         }

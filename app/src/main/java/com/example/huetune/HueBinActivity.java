@@ -79,14 +79,14 @@ public class HueBinActivity extends AppCompatActivity {
     public boolean onContextItemSelected(MenuItem item) {
 
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
-        Integer itemPosition = info.position;
+        int itemPosition = info.position;
 
         int id = item.getItemId();
         if(id == R.id.restore_b) {
             myCursor = adapter.getCursor();
             myCursor.moveToPosition(itemPosition);
             Snackbar sbar = Snackbar.make(findViewById(R.id.mainbinlay), "Photo Restored", Snackbar.LENGTH_LONG);
-            handler.resumePicFromBin(myCursor.getString(myCursor.getColumnIndexOrThrow("picuri")));
+            handler.resumePicFromBin(myCursor.getString(myCursor.getColumnIndexOrThrow("pic")));
             db = handler.getWritableDatabase();
             myCursor = db.rawQuery("SELECT _id,* FROM pics WHERE date IS NOT NULL", null);
             adapter.changeCursor(myCursor);
