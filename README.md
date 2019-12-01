@@ -11,6 +11,6 @@ Permissions (GPS, CAMERA, STORAGE and INTERNET) are requested at run-time using 
 ListView items menus are managed by Context menus that pop-up with long press on single ListView entries. There you can set the Location of the photo by using the actual current position, it is requested to the Google Play Services using Coarse Location.
 
 ## ScreenShots
-![screen1](https://imgur.com/kJe0BDX)
-![screen2](https://imgur.com/0k7vj1d)
-![screen3](https://imgur.com/0j3msKE)
+![screen1](https://imgur.com/kJe0BDX.jpg)
+![screen2](https://imgur.com/0k7vj1d.jpg)
+![screen3](https://imgur.com/0j3msKE.jpg)
