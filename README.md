@@ -9,3 +9,8 @@ The main View is a ListView populated by a CursorAdapter that takes informations
 There's a global menu in the toolbar that gives you the option to go to the Bin Activity where the pictures deleted are stored, they also stay there for 30 days then are deleted (during this 30 days the user have the possibility to restore them). 
 Permissions (GPS, CAMERA, STORAGE and INTERNET) are requested at run-time using DialogCompats.
 ListView items menus are managed by Context menus that pop-up with long press on single ListView entries. There you can set the Location of the photo by using the actual current position, it is requested to the Google Play Services using Coarse Location.
+
+## ScreenShots
+(https://imgur.com/kJe0BDX)
+(https://imgur.com/0k7vj1d)
+(https://imgur.com/0j3msKE)
