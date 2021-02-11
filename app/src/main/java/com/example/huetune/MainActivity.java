@@ -347,8 +347,9 @@ public class MainActivity extends AppCompatActivity {
         }
         if(id == R.id.cm_id_change) {
             AUTOCOMPLETE_REQUEST_CODE = 3;
+            // get your token from https://account.mapbox.com/
             Intent intent = new PlaceAutocomplete.IntentBuilder()
-                    .accessToken("pk.eyJ1IjoibmFjaG9zZnB2IiwiYSI6ImNrMHp2Z213NTA1M3ozY25xNG5vMzh0Nm4ifQ.RlsNT4-jUqoKP85bMOUZjg")
+                    .accessToken("MAPBOX-PUBLIC-TOKEN")
                     .placeOptions(PlaceOptions.builder()
                             .backgroundColor(Color.parseColor("#EEEEEE"))
                             .limit(10)
@@ -419,7 +420,7 @@ public class MainActivity extends AppCompatActivity {
         }
         if (requestCode == TAKE_IMAGE_REQUEST && resultCode==Activity.RESULT_OK) {
             //leggo gli exif perchè alcuni smartphone salvano le foto ruotate
-            //cioè anche in portrai mode salvano la foto in landscape mode
+            //cioè anche in portrait mode salvano la foto in landscape mode
             //ancora peggio se si usa la fotocamera frontale!
             ExifInterface ei = null;
             try {
@@ -524,7 +525,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public Map<String, String> getHeaders() {
                 HashMap headers = new HashMap();
-                String mydashkey = "24ffb05d1e82431b91638ab90386fc84:e684a244a25e47d09085bbcc295e663a"; //trasformo codiceid:keyid di spotify in base 64
+                // get your tokens from https://developer.spotify.com/dashboard/
+                String mydashkey = "CLIENT-ID:CLIENT-SECRET"; //trasformo codiceid:keyid di spotify in base 64
                 mydashkey = Base64.encodeToString(mydashkey.getBytes(), Base64.NO_WRAP); //nowrap per evitare \n
                 mydashkey = "Basic " + mydashkey;
                 //System.out.println("key: " + mydashkey);

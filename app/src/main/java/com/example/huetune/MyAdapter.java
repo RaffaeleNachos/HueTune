@@ -34,12 +34,12 @@ public class MyAdapter extends CursorAdapter {
         String tune = cursor.getString(cursor.getColumnIndexOrThrow("song"));
         String rot = cursor.getString(cursor.getColumnIndexOrThrow("rotation"));
         //setto un placeholder
-        myImg.setImageDrawable(context.getResources().getDrawable(R.drawable.placeholder));
+        //myImg.setImageDrawable(context.getResources().getDrawable(R.drawable.placeholder));
         //myImg.setImageURI(Uri.parse(img)); //SUPER SLOW! Eseguo in Async
-        new ImageLoaderClass(myImg, context).execute(img,rot);
+        //new ImageLoaderClass(myImg, context).execute(img,rot);
         //Glide è una libreria ottima (funzionano anche le gif animate!)
         //sto usando un asynctask solo per scopi universitari, per poter far vedere come eseguire un caricamente asincrono.
-        //Glide.with(view).load(img).centerCrop().into(myImg); //library that uses asyncTask and caching, fast and super simple
+        Glide.with(view).load(img).centerCrop().into(myImg); //library that uses asyncTask and caching, fast and super simple
         myLoc.setText(String.valueOf(loc));
         mySong.setText(String.valueOf(tune));
     }
